@@ -1,0 +1,19 @@
+[package]
+name = "baza"
+version = "0.1.0-dev"
+edition = "2021"
+rust-version = "1.61"
+authors = ["Instrumentisto Team <developer@instrumentisto.com>"]
+license = "BlueOak-1.0.0"
+homepage = "https://github.com/instrumentisto/baza"
+repository = "https://github.com/instrumentisto/baza"
+publish = false
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+
+[profile.dev]
+split-debuginfo = "unpacked"
+
+[dependencies]
