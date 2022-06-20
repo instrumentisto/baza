@@ -3,6 +3,13 @@ name = "baza"
 version = "0.1.0-dev"
 edition = "2021"
 
+[profile.release]
+lto = "thin"
+codegen-units = 1
+
+[profile.dev]
+split-debuginfo = "unpacked"
+
 [workspace]
 members = [
     "api/s3",
