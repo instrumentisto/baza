@@ -27,7 +27,9 @@ struct Opts {
 async fn main() -> Result<(), s3::RunHttpServerError> {
     let opts = Opts::from_args();
 
-    tracing_subscriber::fmt().with_max_level(opts.log_level).init();
+    tracing_subscriber::fmt()
+        .with_max_level(opts.log_level)
+        .init();
 
     s3::run_http_server(Storage::new(opts.root), ("0.0.0.0", opts.port)).await
 }

@@ -22,13 +22,18 @@ const TMP_DIRECTORY: &str = "tmp";
 
 /// E2E runtime.
 static RUNTIME: Lazy<Arc<Runtime>> = Lazy::new(|| {
-    let rt = runtime::Builder::new_current_thread().enable_all().build().expect("Failed to build tokio::Runtime");
+    let rt = runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .expect("Failed to build tokio::Runtime");
 
     let _ = rt.spawn(async {
         let _ = async_fs::remove_dir(TMP_DIRECTORY).await;
 
         #[cfg(not(feature = "standalone"))]
-        s3::run_http_server(baza::Storage::new(TMP_DIRECTORY), URL).await.expect("Failed to run HTTP server")
+        s3::run_http_server(baza::Storage::new(TMP_DIRECTORY), URL)
+            .await
+            .expect("Failed to run HTTP server")
     });
 
     Arc::new(rt)
@@ -38,7 +43,10 @@ static RUNTIME: Lazy<Arc<Runtime>> = Lazy::new(|| {
 async fn put_object_works_for_regular_files() {
     let bytes = async_fs::read("samples/rms.jpg").await.expect("rms.jpg");
 
-    let c = S3Client::new(Region::Custom { name: "test".to_string(), endpoint: format!("http://{URL}") });
+    let c = S3Client::new(Region::Custom {
+        name: "test".to_string(),
+        endpoint: format!("http://{URL}"),
+    });
 
     c.put_object(PutObjectRequest {
         bucket: "data".to_string(),
@@ -49,7 +57,9 @@ async fn put_object_works_for_regular_files() {
     .await
     .expect("put_object");
 
-    let stored_bytes = async_fs::read("tmp/put_object_file/my.jpg").await.expect("rms.jpg");
+    let stored_bytes = async_fs::read("tmp/put_object_file/my.jpg")
+        .await
+        .expect("rms.jpg");
 
     assert!(bytes == stored_bytes, "Bytes don't match");
 }
@@ -58,7 +68,10 @@ async fn put_object_works_for_regular_files() {
 async fn put_object_works_for_symlinks() {
     let bytes = async_fs::read("samples/rms.jpg").await.expect("rms.jpg");
 
-    let c = S3Client::new(Region::Custom { name: "test".to_string(), endpoint: format!("http://{URL}") });
+    let c = S3Client::new(Region::Custom {
+        name: "test".to_string(),
+        endpoint: format!("http://{URL}"),
+    });
 
     c.put_object(PutObjectRequest {
         bucket: "data".to_string(),
@@ -74,7 +87,10 @@ async fn put_object_works_for_symlinks() {
         key: "put_object_symlink/symlink.jpg".to_string(),
         metadata: Some({
             let mut m = HashMap::new();
-            m.insert(s3::SYMLINK_META_KEY.to_string(), "put_object_symlink/my.jpg".to_string());
+            m.insert(
+                s3::SYMLINK_META_KEY.to_string(),
+                "put_object_symlink/my.jpg".to_string(),
+            );
             m
         }),
         body: Some(vec![].into()),
@@ -83,14 +99,19 @@ async fn put_object_works_for_symlinks() {
     .await
     .expect("put_object");
 
-    let stored_bytes = async_fs::read("tmp/put_object_symlink/symlink.jpg").await.expect("symlink.jpg");
+    let stored_bytes = async_fs::read("tmp/put_object_symlink/symlink.jpg")
+        .await
+        .expect("symlink.jpg");
 
     assert!(bytes == stored_bytes, "Bytes don't match");
 }
 
 #[tokio::test(crate = "executor")]
 async fn put_object_errors_on_invalid_path() {
-    let c = S3Client::new(Region::Custom { name: "test".to_string(), endpoint: format!("http://{URL}") });
+    let c = S3Client::new(Region::Custom {
+        name: "test".to_string(),
+        endpoint: format!("http://{URL}"),
+    });
 
     let res = c
         .put_object(PutObjectRequest {
@@ -102,10 +123,11 @@ async fn put_object_errors_on_invalid_path() {
         .await;
 
     match &res {
-        Err(RusotoError::Unknown(resp)) if resp.body_as_str().contains("InvalidArgument") => {},
+        Err(RusotoError::Unknown(resp))
+            if resp.body_as_str().contains("InvalidArgument") => {}
         _ => {
             assert!(false, "Expected InvalidArgument error, got: {res:#?}")
-        },
+        }
     }
 }
 
