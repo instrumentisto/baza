@@ -1,0 +1,9 @@
+[package]
+name = "baza-api-s3"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+baza = { path = "../../" }
+hyper = "0.14.19"
+s3-server = "0.2.0"
