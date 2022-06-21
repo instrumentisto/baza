@@ -131,32 +131,20 @@ checksum = "904dfeac50f3cdaba28fc6f57fdcddb75f49ed61346676a78c4ffe55877802fd"
 name = "baza"
 version = "0.1.0-dev"
 dependencies = [
- "async-fs",
- "async-trait",
- "derive_more",
- "futures-lite",
- "tracerr",
- "tracing",
+ "baza-api-s3",
+ "baza-lib",
+ "structopt",
+ "tokio",
+ "tracing-subscriber 0.2.25",
 ]
 
 [[package]]
 name = "baza-api-s3"
 version = "0.1.0"
 dependencies = [
- "baza",
+ "baza-lib",
  "hyper",
  "s3-server",
-]
-
-[[package]]
-name = "baza-bin"
-version = "0.1.0"
-dependencies = [
- "baza",
- "baza-api-s3",
- "structopt",
- "tokio",
- "tracing-subscriber 0.2.25",
 ]
 
 [[package]]
@@ -164,12 +152,24 @@ name = "baza-e2e"
 version = "0.1.0"
 dependencies = [
  "async-fs",
- "baza",
  "baza-api-s3",
+ "baza-lib",
  "once_cell",
  "rusoto_core 0.48.0",
  "rusoto_s3 0.48.0",
  "tokio",
+]
+
+[[package]]
+name = "baza-lib"
+version = "0.1.0"
+dependencies = [
+ "async-fs",
+ "async-trait",
+ "derive_more",
+ "futures-lite",
+ "tracerr",
+ "tracing",
 ]
 
 [[package]]

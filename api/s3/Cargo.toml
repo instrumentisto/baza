@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-baza = { path = "../../" }
+baza = { package = "baza-lib", path = "../../lib" }
 hyper = "0.14.19"
 s3-server = "0.2.0"

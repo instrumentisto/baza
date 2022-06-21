@@ -2,6 +2,12 @@
 name = "baza"
 version = "0.1.0-dev"
 edition = "2021"
+rust-version = "1.61"
+authors = ["Instrumentisto Team <developer@instrumentisto.com>"]
+license = "BlueOak-1.0.0"
+homepage = "https://github.com/instrumentisto/baza"
+repository = "https://github.com/instrumentisto/baza"
+publish = false
 
 [profile.release]
 lto = "thin"
@@ -14,14 +20,12 @@ split-debuginfo = "unpacked"
 members = [
     "api/s3",
     "e2e",
-    "bin",
+    "lib",
 ]
 
 [dependencies]
-async-fs = "1.5"
-async-trait = "0.1.56"
-derive_more = "0.99.17"
-futures-lite = "1.12"
-tracerr = "0.3"
-tracing = "0.1.35"
-
+baza = { package = "baza-lib", path = "lib" }
+baza-api-s3 = { path = "api/s3" }
+structopt = "0.3.26"
+tokio = "1.0"
+tracing-subscriber = "0.2"
