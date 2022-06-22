@@ -1,4 +1,1 @@
-//! Baza E2E tests.
-
-#[cfg(test)]
-pub mod s3;
+//! Dummy crate for E2E (end-to-end) tests of project.

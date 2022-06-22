@@ -3,10 +3,7 @@ pub use derive_more;
 pub use futures_lite;
 pub use tracing;
 
-use std::{
-    fmt, io,
-    path::{Path, PathBuf},
-};
+use std::{fmt, io, path::PathBuf};
 
 use async_fs::{unix::symlink, File};
 use derive_more::{Display, Error};
@@ -31,8 +28,26 @@ pub struct Storage {
 
 impl Storage {
     /// Creates a new [`Storage`].
-    pub fn new(root: impl Into<PathBuf>) -> Self {
-        Storage { root: root.into() }
+    ///
+    /// If the provided `root` directory does not exist yet, tries to create it
+    /// along with all its parent directories.
+    ///
+    /// # Errors
+    ///
+    /// - If `root` is an invalid path
+    /// - If `root` is not a directory
+    pub async fn new(root: impl Into<PathBuf>) -> Result<Self, io::Error> {
+        let path = root.into();
+        async_fs::create_dir_all(&path).await?;
+
+        Ok(Storage {
+            root: async_fs::canonicalize(path).await?,
+        })
+    }
+
+    /// Transforms a [`RelativePath`] into an absolute one.
+    fn absolutize(&self, relative: RelativePath) -> PathBuf {
+        [self.root.clone(), relative.0].into_iter().collect()
     }
 }
 
@@ -61,7 +76,7 @@ where
 
     #[tracing::instrument(level = "debug", err(Debug))]
     async fn exec(&self, mut op: CreateFile<S>) -> Result<Self::Ok, Self::Err> {
-        let path = op.path.in_dir(&self.root);
+        let path = self.absolutize(op.path);
 
         if let Some(dir) = path.parent() {
             async_fs::create_dir_all(dir)
@@ -98,7 +113,7 @@ impl Exec<Symlink> for Storage {
 
     #[tracing::instrument(level = "debug", err(Debug))]
     async fn exec(&self, op: Symlink) -> Result<Self::Ok, Self::Err> {
-        let link = op.link.in_dir(&self.root);
+        let link = self.absolutize(op.link);
 
         if let Some(dir) = link.parent() {
             async_fs::create_dir_all(dir)
@@ -106,7 +121,7 @@ impl Exec<Symlink> for Storage {
                 .map_err(|e| tracerr::new!(e))?;
         }
 
-        symlink(op.original.in_dir(&self.root), link)
+        symlink(self.absolutize(op.original), link)
             .await
             .map_err(|e| tracerr::new!(e))
     }
@@ -123,13 +138,7 @@ impl Exec<Symlink> for Storage {
 pub struct RelativePath(PathBuf);
 
 impl RelativePath {
-    /// Builds a [`PathBuf`] by joining the provided `dir`ectory path with this
-    /// [`RelativePath`].
-    fn in_dir(self, dir: &Path) -> PathBuf {
-        [dir.to_owned(), self.0].into_iter().collect()
-    }
-
-    /// Joins to [`RelativePath`]s.
+    /// Joins another [`RelativePath`]s to this one.
     pub fn join(mut self, other: RelativePath) -> Self {
         self.0.push(other.0);
         self

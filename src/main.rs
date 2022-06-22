@@ -24,12 +24,18 @@ struct Args {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), s3::RunHttpServerError> {
+async fn main() -> Result<(), String> {
     let args = Args::parse();
 
     tracing_subscriber::fmt()
         .with_max_level(args.log_level)
         .init();
 
-    s3::run_http_server(Storage::new(args.root), ("0.0.0.0", args.port)).await
+    let storage = Storage::new(args.root)
+        .await
+        .map_err(|e| format!("Failed to initialize Storage: {e}"))?;
+
+    s3::run_http_server(storage, ("0.0.0.0", args.port))
+        .await
+        .map_err(|e| format!("Failed to run S3 HTTP server: {e}"))
 }

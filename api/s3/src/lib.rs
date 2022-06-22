@@ -23,7 +23,7 @@ use baza::{
 
 /// [`dto::PutObjectRequest::metadata`] key where [`Symlink::original`] is
 /// expected to be provided.
-pub const SYMLINK_META_KEY: &str = "Symlink-To";
+pub const SYMLINK_META_KEY: &str = "symlink-to";
 
 /// Runs s3 http server.
 ///

@@ -3,16 +3,18 @@ name = "baza-e2e"
 version = "0.1.0"
 edition = "2021"
 
-[features]
-standalone = []
-
-[dependencies]
-
 [dev-dependencies]
 async-fs = "1.5"
 baza = { package = "baza-lib", path = "../lib" }
 baza-api-s3 = { path = "../api/s3" }
+cucumber = "0.13"
 once_cell = "1.12"
 rusoto_core = { version = "0.48" }
 rusoto_s3 = { version = "0.48" }
 tokio = "1.0"
+
+[[test]]
+name = "e2e"
+path = "tests/main.rs"
+# Allows Cucumber to print output instead of libtest.
+harness = false
