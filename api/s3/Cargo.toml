@@ -1,9 +1,14 @@
 [package]
 name = "baza-api-s3"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2021"
+rust-version = "1.61"
+description = "S3 HTTP API implementation of Baza."
+authors = ["Instrumentisto Team <developer@instrumentisto.com>"]
+license = "BlueOak-1.0.0"
+publish = false
 
 [dependencies]
 baza = { package = "baza-lib", path = "../../lib" }
 hyper = "0.14.19"
-s3-server = "0.2.0"
+s3-server = "0.2"

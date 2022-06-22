@@ -1,26 +1,25 @@
-//! S3 API E2E tests.
+//! S3 HTTP API E2E (end-to-end) tests.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, io};
 
+use baza::futures_lite::{stream, StreamExt};
+use baza_api_s3 as s3;
 use cucumber::{given, then, when};
 use rusoto_core::{region::Region, RusotoError};
 use rusoto_s3::{PutObjectError, PutObjectRequest, S3Client, S3 as _};
 
-use baza::futures_lite::{stream, StreamExt};
-use baza_api_s3 as s3;
+use super::{sample_file, World, TMP_DIR};
 
-use super::{sample_file, World, TMP_DIRECTORY};
+/// URL of S3 HTTP API to run E2E tests against.
+const API_URL: &str = "http://localhost:9294";
 
-/// S3 API URL.
-const URL: &str = "localhost:9294";
-
-#[when(regex = r"^a file is uploaded to '(\S+)' bucket using '(\S+)' key$")]
+#[when(regex = r"^`(\S+)` file is uploaded to `(\S+)` bucket$")]
 async fn file_uploaded(_: &mut World, bucket: String, key: String) {
     put_object(bucket, key, sample_file(), None::<String>).await
 }
 
-#[when(regex = "^a symlink is uploaded to '(\\S+)' bucket \
-                 using '(\\S+)' key pointing to '(\\S+)'$")]
+#[when(regex = "^`(\\S+)` symlink is created on `(\\S+)` bucket \
+                 pointing to `(\\S+)`$")]
 async fn symlink_is_uploaded(
     _: &mut World,
     bucket: String,
@@ -30,12 +29,12 @@ async fn symlink_is_uploaded(
     put_object(bucket, key, &[], Some(original)).await
 }
 
-#[then(regex = r"^the file is (?:stored as|accessible via) '(\S+)'$")]
-async fn file_is_accessible(_: &mut World, path: String) {
-    let stored = async_fs::read(format!("{TMP_DIRECTORY}/{path}"))
-        .await
-        .expect("file");
+#[then(regex = r"^the file is (?:stored as|accessible via) `(\S+)`$")]
+async fn file_is_accessible(_: &mut World, path: String) -> io::Result<()> {
+    let stored = async_fs::read(format!("{TMP_DIR}/{path}")).await?;
+
     assert!(sample_file() == stored, "Bytes don't match");
+    Ok(())
 }
 
 #[given("keys with leading '/' are considered invalid")]
@@ -64,7 +63,7 @@ fn assert_invalid_argument(res: Result<(), RusotoError<PutObjectError>>) {
         Err(RusotoError::Unknown(resp))
             if resp.body_as_str().contains("InvalidArgument") => {}
         _ => {
-            assert!(false, "Expected InvalidArgument error, got: {res:#?}")
+            panic!("Expected InvalidArgument error, got: {res:#?}");
         }
     }
 }
@@ -101,9 +100,11 @@ async fn try_put_object(
     s3_client().put_object(req).await.map(drop)
 }
 
+/// Creates a new [`S3Client`] for performing requests to the S3 HTTP API being
+/// tested.
 fn s3_client() -> S3Client {
     S3Client::new(Region::Custom {
         name: "test".to_string(),
-        endpoint: format!("http://{URL}"),
+        endpoint: API_URL.into(),
     })
 }

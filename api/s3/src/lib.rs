@@ -1,4 +1,4 @@
-//! S3 HTTP API Baza implementation.
+//! S3 HTTP API implementation of Baza.
 
 use std::{
     convert::Infallible,
@@ -17,15 +17,14 @@ use baza::{
     async_trait,
     derive_more::{Display, Error, From},
     futures_lite::future,
-    tracing::{self, info},
-    CreateFile, Exec, RelativePath, Symlink,
+    tracing, CreateFile, CreateSymlink, Exec, RelativePath,
 };
 
 /// [`dto::PutObjectRequest::metadata`] key where [`Symlink::original`] is
 /// expected to be provided.
 pub const SYMLINK_META_KEY: &str = "symlink-to";
 
-/// Runs s3 http server.
+/// Runs [`S3`] HTTP server.
 ///
 /// # Errors
 ///
@@ -44,11 +43,11 @@ where
         future::ready(Ok::<_, Infallible>(service.clone()))
     });
 
-    info!("Starting S3 HTTP Server");
+    tracing::info!("Starting S3 HTTP Server");
     Ok(Server::from_tcp(listener)?.serve(make_service).await?)
 }
 
-/// Errors of [`run_http_server`] fn.
+/// Possible error of executing [`run_http_server()`].
 #[derive(Debug, Display, Error, From)]
 pub enum RunHttpServerError {
     /// Failed to bind address.
@@ -60,7 +59,7 @@ pub enum RunHttpServerError {
     Hyper(hyper::Error),
 }
 
-/// Local wrapper for implementing foreign traits on foreign types.
+/// Actual [`S3Storage`] implementation.
 #[derive(Clone, Debug)]
 pub struct S3<T>(T);
 
@@ -68,7 +67,7 @@ pub struct S3<T>(T);
 impl<S, E1, E2> S3Storage for S3<S>
 where
     S: Exec<CreateFile<dto::ByteStream>, Err = E1>
-        + Exec<Symlink, Err = E2>
+        + Exec<CreateSymlink, Err = E2>
         + fmt::Debug
         + Send
         + Sync
@@ -199,9 +198,9 @@ where
             .metadata
             .and_then(|mut meta| meta.remove(SYMLINK_META_KEY))
         {
-            let op = Symlink {
-                original: parse_relative_path(SYMLINK_META_KEY, original)?,
-                link: path,
+            let op = CreateSymlink {
+                src: parse_relative_path(SYMLINK_META_KEY, original)?,
+                dest: path,
             };
 
             self.0
@@ -219,7 +218,7 @@ where
             })?;
         };
 
-        info!("OK");
+        tracing::info!("OK");
         Ok(dto::PutObjectOutput::default())
     }
 
@@ -231,13 +230,13 @@ where
     }
 }
 
-/// Parses `bucket` and `key` into a single [`RelativePath`].
+/// Parses the provided `bucket` and `key` into a single [`RelativePath`].
 fn parse_s3_path(bucket: String, key: String) -> Result<RelativePath, S3Error> {
     Ok(parse_relative_path("bucket", bucket)?
         .join(parse_relative_path("key", key)?))
 }
 
-/// Parses a string into [`RelativePath`].
+/// Parses the provided [`String`] into a [`RelativePath`].
 fn parse_relative_path(attr: &str, s: String) -> Result<RelativePath, S3Error> {
     s.try_into().map_err(|e| {
         S3Error::new(
@@ -247,7 +246,7 @@ fn parse_relative_path(attr: &str, s: String) -> Result<RelativePath, S3Error> {
     })
 }
 
-/// Constructs internal [`S3Error`].
+/// Constructs an internal [`S3Error`].
 fn internal_error<E: fmt::Display>(msg: &str, e: E) -> S3Error {
     S3Error::new(S3ErrorCode::InternalError, format!("{msg}: {e}"))
 }

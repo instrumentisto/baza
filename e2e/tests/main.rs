@@ -1,16 +1,16 @@
-//! E2E (end-to-end) tests of project.
+//! E2E (end-to-end) tests of this project.
+
+mod s3;
 
 use std::{convert::Infallible, io};
 
-use cucumber::{runner, WorldInit};
+use cucumber::WorldInit;
 use once_cell::sync::Lazy;
 
 use baza::async_trait;
 
-mod s3;
-
-/// Temporary root directory for storing files.
-const TMP_DIRECTORY: &str = "tmp";
+/// Temporary directory for storing files during E2E tests running.
+const TMP_DIR: &str = "tmp";
 
 #[derive(Debug, WorldInit)]
 struct World;
@@ -25,11 +25,12 @@ impl cucumber::World for World {
 }
 
 #[tokio::main]
-async fn main() {
-    let _ = clear_tmp_dir().await;
+async fn main() -> Result<(), String> {
+    clear_tmp_dir()
+        .await
+        .map_err(|e| format!("Failed to clear temporary directory: {e}"))?;
 
     World::cucumber()
-        .with_runner(runner::Basic::default())
         .steps(World::collection())
         .repeat_failed()
         .fail_on_skipped()
@@ -39,13 +40,26 @@ async fn main() {
 
     clear_tmp_dir()
         .await
-        .expect("Failed to clear tmp directory")
+        .map_err(|e| format!("Failed to clear temporary directory: {e}"))
 }
 
+/// Clears the [`TMP_DIR`].
+///
+/// # Idempotent
+///
+/// Succeeds if the directory doesn't exist already.
 async fn clear_tmp_dir() -> Result<(), io::Error> {
-    async_fs::remove_dir_all(TMP_DIRECTORY).await
+    if !async_fs::metadata(TMP_DIR)
+        .await
+        .map(|m| m.is_dir())
+        .unwrap_or_default()
+    {
+        return Ok(());
+    }
+    async_fs::remove_dir_all(TMP_DIR).await
 }
 
+/// Reads the `samples/` file and memoizes it.
 fn sample_file() -> &'static [u8] {
     static SAMPLE: Lazy<Vec<u8>> = Lazy::new(|| {
         std::fs::read("samples/rms.jpg").expect("Sample file is missing")
