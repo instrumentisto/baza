@@ -1,10 +1,11 @@
 //! S3 HTTP API E2E (end-to-end) tests.
 
-use std::{collections::HashMap, io};
+use std::{collections::HashMap, io, mem};
 
 use baza::futures_lite::{stream, StreamExt};
 use baza_api_s3 as s3;
-use cucumber::{given, then, when};
+
+use cucumber::{gherkin::Step, then, when};
 use rusoto_core::{region::Region, HttpClient, RusotoError};
 use rusoto_credential::StaticProvider;
 use rusoto_s3::{PutObjectError, PutObjectRequest, S3Client, S3 as _};
@@ -38,25 +39,23 @@ async fn file_is_accessible(_: &mut World, path: String) -> io::Result<()> {
     Ok(())
 }
 
-#[given("keys with leading '/' are considered invalid")]
-async fn root_keys_are_invalid(_: &mut World) {
-    stream::iter(["/abc", "/abc/d"])
+#[when("trying to upload files with the following keys:")]
+async fn keys_table(w: &mut World, step: &Step) {
+    w.keys_to_check = step
+        .table()
+        .expect("No data table present")
+        .rows
+        .iter()
+        .map(|row| row[0].clone())
+        .collect();
+}
+
+#[then("'InvalidArgument' error is returned")]
+async fn invalid_argument_error(w: &mut World) {
+    stream::iter(mem::take(&mut w.keys_to_check))
         .then(|key| try_put_object("data", key, &[], None::<String>))
         .for_each(assert_invalid_argument)
         .await;
-}
-
-#[given(
-    "keys containing '.', '..', '//' path components are considered invalid"
-)]
-async fn invalid_path_components(_: &mut World) {
-    stream::iter([
-        "./abc", "abc/.", "abc/./d", "../abc", "abc/..", "abc/../d", "abc//",
-        "abc//d",
-    ])
-    .then(|key| try_put_object("data", key, &[], None::<String>))
-    .for_each(assert_invalid_argument)
-    .await;
 }
 
 fn assert_invalid_argument(res: Result<(), RusotoError<PutObjectError>>) {

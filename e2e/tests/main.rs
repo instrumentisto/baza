@@ -2,7 +2,7 @@
 
 mod s3;
 
-use std::{convert::Infallible, io};
+use std::{collections::HashSet, convert::Infallible, io};
 
 use cucumber::WorldInit;
 use once_cell::sync::Lazy;
@@ -12,15 +12,18 @@ use baza::async_trait;
 /// Temporary directory for storing files during E2E tests running.
 const TMP_DIR: &str = "tmp";
 
-#[derive(Debug, WorldInit)]
-struct World;
+#[derive(Debug, Default, WorldInit)]
+struct World {
+    // S3 Object keys to check for validity.
+    keys_to_check: HashSet<String>,
+}
 
 #[async_trait(?Send)]
 impl cucumber::World for World {
     type Error = Infallible;
 
     async fn new() -> Result<Self, Self::Error> {
-        Ok(Self)
+        Ok(Self::default())
     }
 }
 
