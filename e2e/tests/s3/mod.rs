@@ -101,7 +101,7 @@ async fn try_put_object(
     s3_client().put_object(req).await.map(drop)
 }
 
-/// Creates a new ['S3Client'] for performing requests to the S3 HTTP API being
+/// Creates a new [`S3Client`] for performing requests to the S3 HTTP API being
 /// tested.
 fn s3_client() -> S3Client {
     S3Client::new_with(
