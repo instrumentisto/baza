@@ -5,7 +5,8 @@ use std::{collections::HashMap, io};
 use baza::futures_lite::{stream, StreamExt};
 use baza_api_s3 as s3;
 use cucumber::{given, then, when};
-use rusoto_core::{region::Region, RusotoError};
+use rusoto_core::{region::Region, HttpClient, RusotoError};
+use rusoto_credential::StaticProvider;
 use rusoto_s3::{PutObjectError, PutObjectRequest, S3Client, S3 as _};
 
 use super::{sample_file, World, TMP_DIR};
@@ -13,23 +14,23 @@ use super::{sample_file, World, TMP_DIR};
 /// URL of S3 HTTP API to run E2E tests against.
 const API_URL: &str = "http://localhost:9294";
 
-#[when(regex = r"^`(\S+)` file is uploaded to `(\S+)` bucket$")]
-async fn file_uploaded(_: &mut World, bucket: String, key: String) {
+#[when(regex = r"^'(\S+)' file is uploaded to '(\S+)' bucket$")]
+async fn file_uploaded(_: &mut World, key: String, bucket: String) {
     put_object(bucket, key, sample_file(), None::<String>).await
 }
 
-#[when(regex = "^`(\\S+)` symlink is created on `(\\S+)` bucket \
-                 pointing to `(\\S+)`$")]
+#[when(regex = "^'(\\S+)' symlink is created on '(\\S+)' bucket \
+                 pointing to '(\\S+)'$")]
 async fn symlink_is_uploaded(
     _: &mut World,
-    bucket: String,
     key: String,
+    bucket: String,
     original: String,
 ) {
     put_object(bucket, key, &[], Some(original)).await
 }
 
-#[then(regex = r"^the file is (?:stored as|accessible via) `(\S+)`$")]
+#[then(regex = r"^the file is (?:stored as|accessible via) '(\S+)'$")]
 async fn file_is_accessible(_: &mut World, path: String) -> io::Result<()> {
     let stored = async_fs::read(format!("{TMP_DIR}/{path}")).await?;
 
@@ -100,11 +101,15 @@ async fn try_put_object(
     s3_client().put_object(req).await.map(drop)
 }
 
-/// Creates a new [`S3Client`] for performing requests to the S3 HTTP API being
+/// Creates a new ['S3Client'] for performing requests to the S3 HTTP API being
 /// tested.
 fn s3_client() -> S3Client {
-    S3Client::new(Region::Custom {
-        name: "test".to_string(),
-        endpoint: API_URL.into(),
-    })
+    S3Client::new_with(
+        HttpClient::new().expect("Failed to initialize Rusoto Http client"),
+        StaticProvider::new_minimal("test".to_string(), "test".to_string()),
+        Region::Custom {
+            name: "test".to_string(),
+            endpoint: API_URL.into(),
+        },
+    )
 }
