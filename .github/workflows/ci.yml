@@ -26,7 +26,7 @@ jobs:
       - cargo-clippy
       - cargo-fmt
       - cargo-doc
-      - cargo-test.-nit
+      - cargo-test-unit
       - docker-build
       - docker-test-e2e
     runs-on: ubuntu-latest
