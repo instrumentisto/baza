@@ -99,7 +99,7 @@ cargo.clippy:
 #	make cargo.run [background=(yes|no)] [debug=(yes|no)]
 
 cargo.run:
-	cargo run $(call if_eq,$(debug),no,--release,) -- -r e2e/tmp \
+	cargo run $(call if_eq,$(debug),no,--release,) -- -r ./.tmp \
 			  $(call if_eq,$(background),yes,&,)
 
 
@@ -166,14 +166,18 @@ docker.build:
 # Run project in Docker container.
 #
 # Usage:
-#	make docker.run [tag=(dev|<tag>)] [debug=(yes|no)] [no-cache=(no|yes)]
+#	make docker.run [tag=(dev|<tag>)]
+#                   [rebuild=no |
+#                    rebuild=yes [debug=(yes|no)] [no-cache=(yes|no)]]
 
 docker.run:
 	-make docker.stop
+ifeq ($(rebuild),yes)
 	make docker.build tag=$(tag) debug=$(debug) no-cache=$(no-cache)
+endif
 	mkdir -p .tmp
 	docker run --network=host --rm --name $(PROJECT_NAME) \
-		       -v .tmp:/files $(call docker_tag,$(tag))
+		       -v ./.tmp:/files $(call docker_tag,$(tag))
 
 
 # Stop project's Docker container.
@@ -188,15 +192,16 @@ docker.stop:
 # Run E2E tests of the project in a Docker container.
 #
 # Usage:
-#	make cargo.test.e2e [start-app=no | start-app=yes
-#                                       [tag=(dev|<tag>)]
-#									    [debug=(yes|no)]
-# 										[no-cache=(no|yes)]]
-
+#	make cargo.test.e2e
+#     [start-app=no |
+#      start-app=yes [tag=(dev|<tag>)]
+#                    [rebuild=no |
+#                    rebuild=yes [debug=(yes|no)] [no-cache=(yes|no)]]]
 
 docker.test.e2e:
 ifeq ($(start-app),yes)
-	make docker.run tag=$(tag) debug=$(debug) no-cache=$(no-cache)
+	make docker.run tag=$(tag) rebuild=$(rebuild) \
+				    debug=$(debug) no-cache=$(no-cache)
 endif
 	docker run --rm --network=host -v "$(PWD)":/app -w /app \
 	           -v "$(abspath $(CARGO_HOME))/registry":/usr/local/cargo/registry\

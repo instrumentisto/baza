@@ -10,7 +10,7 @@ use baza::async_trait;
 mod s3;
 
 /// Temporary root directory for storing files.
-const TMP_DIRECTORY: &str = "tmp";
+const TMP_DIRECTORY: &str = "../.tmp";
 
 #[derive(Debug, WorldInit)]
 struct World;
