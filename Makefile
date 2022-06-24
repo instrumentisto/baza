@@ -172,7 +172,7 @@ docker.build:
 # Run project in Docker container.
 #
 # Usage:
-#	make docker.run [tag=(dev|<tag>)] [wait=<secs>]
+#	make docker.run [tag=(dev|<tag>)]
 #                   [rebuild=no |
 #                    rebuild=yes [debug=(yes|no)] [no-cache=(yes|no)]]
 
@@ -183,7 +183,7 @@ ifeq ($(rebuild),yes)
 endif
 	mkdir -p .tmp
 	docker run --network=host --rm --name $(PROJECT_NAME) \
-	           -u "$(UID)" -d \
+	           -u "$(UID)" \
 		       -v "$(PWD)/.tmp":/files $(call docker_tag,$(tag))
 ifneq ($(wait),)
 	sleep $(wait)
@@ -204,13 +204,12 @@ docker.stop:
 #	make docker.test.e2e
 #     [start-app=no |
 #      start-app=yes [tag=(dev|<tag>)]
-#                    [wait=<secs>]
 #                    [rebuild=no |
 #                    rebuild=yes [debug=(yes|no)] [no-cache=(yes|no)]]]
 
 docker.test.e2e:
 ifeq ($(start-app),yes)
-	make docker.run tag=$(tag) rebuild=$(rebuild) wait=$(wait) \
+	make docker.run tag=$(tag) rebuild=$(rebuild) \
 				    debug=$(debug) no-cache=$(no-cache)
 endif
 	docker run --rm --network=host -v "$(PWD)":/app -w /app \
