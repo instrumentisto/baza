@@ -1,7 +1,12 @@
 [package]
 name = "baza-e2e"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2021"
+rust-version = "1.61"
+description = "E2E (end-to-end) tests of this project."
+authors = ["Instrumentisto Team <developer@instrumentisto.com>"]
+license = "BlueOak-1.0.0"
+publish = false
 
 [dev-dependencies]
 async-fs = "1.5"
@@ -17,5 +22,4 @@ tokio = "1.0"
 [[test]]
 name = "e2e"
 path = "tests/main.rs"
-# Allows Cucumber to print output instead of libtest.
 harness = false
