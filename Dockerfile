@@ -8,12 +8,6 @@ FROM ghcr.io/instrumentisto/rust:${rust_ver} AS dist
 ARG rustc_mode=release
 ARG rustc_opts=--release
 
-# Create the user and group files that will be used in the running container to
-# run the process as an unprivileged user.
-RUN mkdir -p /out/etc/ \
- && echo 'nobody:x:65534:65534:nobody:/:' > /out/etc/passwd \
- && echo 'nobody:x:65534:' > /out/etc/group
-
 COPY api/ /app/api/
 COPY lib/ /app/lib/
 COPY e2e/ /app/e2e/
@@ -37,7 +31,6 @@ RUN cp /app/target/${rustc_mode}/baza /out/baza \
     | xargs -I '{}' cp -fL --parents '{}' /out/ \
  && rm -rf /out/out
 
-
 #
 # Stage 'runtime' creates final Docker image to use in runtime.
 #
@@ -47,6 +40,6 @@ FROM scratch AS runtime
 
 COPY --from=dist /out/ /
 
-USER nobody:nobody
+USER 1000:1000
 
-ENTRYPOINT ["/baza", "-r /files"]
+ENTRYPOINT ["/baza", "--root=/files"]

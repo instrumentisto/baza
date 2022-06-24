@@ -177,7 +177,7 @@ ifeq ($(rebuild),yes)
 endif
 	mkdir -p .tmp
 	docker run --network=host --rm --name $(PROJECT_NAME) \
-		       -v "$(PWD)"/.tmp:/files $(call docker_tag,$(tag))
+		       -v "$(PWD)/.tmp":/files $(call docker_tag,$(tag))
 
 
 # Stop project's Docker container.
