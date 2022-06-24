@@ -125,7 +125,7 @@ jobs:
 
   crate-baza:
     name: Build baza
-    if: ${{ github.ref == 'refs/heads/main' | startsWith(github.ref, 'refs/tags/baza-') }}
+    if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/baza-') }}
     strategy:
       fail-fast: false
     runs-on: ubuntu-latest
@@ -186,7 +186,7 @@ jobs:
   release-docker:
     name: Release Docker image
     needs: ["docker"]
-    if: ${{ github.ref == 'refs/heads/main' | startsWith(github.ref, 'refs/tags/baza-') }}
+    if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/baza-') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
