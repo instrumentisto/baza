@@ -131,14 +131,15 @@ impl Exec<Symlink> for Storage {
 ///
 /// The following [`PathBuf`] components are forbidden:
 /// - Root (leading '/')
-/// - CurDir ('.')
-/// - ParentDir ('..')
+/// - Current directory ('.')
+/// - Parent directory ('..')
 /// - empty component ('//')
 #[derive(Clone, Debug)]
 pub struct RelativePath(PathBuf);
 
 impl RelativePath {
     /// Joins another [`RelativePath`]s to this one.
+    #[must_use]
     pub fn join(mut self, other: RelativePath) -> Self {
         self.0.push(other.0);
         self

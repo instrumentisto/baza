@@ -3,5 +3,6 @@
 /*.iml
 .DS_Store
 
+.cache
 /target/
 /e2e/tmp/

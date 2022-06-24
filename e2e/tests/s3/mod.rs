@@ -3,7 +3,8 @@
 use std::collections::HashMap;
 
 use cucumber::{given, then, when};
-use rusoto_core::{region::Region, RusotoError};
+use rusoto_core::{region::Region, HttpClient, RusotoError};
+use rusoto_credential::StaticProvider;
 use rusoto_s3::{PutObjectError, PutObjectRequest, S3Client, S3 as _};
 
 use baza::futures_lite::{stream, StreamExt};
@@ -102,8 +103,12 @@ async fn try_put_object(
 }
 
 fn s3_client() -> S3Client {
-    S3Client::new(Region::Custom {
-        name: "test".to_string(),
-        endpoint: format!("http://{URL}"),
-    })
+    S3Client::new_with(
+        HttpClient::new().expect("Failed to initialize Rusoto Http client"),
+        StaticProvider::new_minimal("test".to_string(), "test".to_string()),
+        Region::Custom {
+            name: "test".to_string(),
+            endpoint: format!("http://{URL}"),
+        },
+    )
 }

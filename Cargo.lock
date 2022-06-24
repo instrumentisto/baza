@@ -157,6 +157,7 @@ dependencies = [
  "cucumber",
  "once_cell",
  "rusoto_core 0.48.0",
+ "rusoto_credential 0.48.0",
  "rusoto_s3 0.48.0",
  "tokio",
 ]
