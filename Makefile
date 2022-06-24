@@ -53,7 +53,13 @@ fmt: cargo.fmt
 lint: cargo.clippy
 
 
-test: cargo.test.e2e cargo.test.unit
+test: test.e2e test.unit
+
+
+test.unit: cargo.test.unit
+
+
+test.e2e: cargo.test.e2e
 
 
 run: docker.run
@@ -121,7 +127,7 @@ endif
 # Run unit tests of the project.
 #
 # Usage:
-#	make test.unit [crate=<crate-name>]
+#	make cargo.test.unit [crate=<crate-name>]
 
 cargo.test.unit:
 ifeq ($(crate),)
@@ -195,7 +201,7 @@ docker.stop:
 # Run E2E tests of the project in a Docker container.
 #
 # Usage:
-#	make cargo.test.e2e
+#	make docker.test.e2e
 #     [start-app=no |
 #      start-app=yes [tag=(dev|<tag>)]
 #                    [wait=<secs>]
@@ -275,7 +281,7 @@ docker.untar:
 # .PHONY section #
 ##################
 
-.PHONY: all build docs stop fmt lint test run \
+.PHONY: all build docs stop fmt lint test test.unit test.e2e run \
         cargo.fmt cargo.clippy cargo.run cargo.test.e2e \
 		cargo.test.unit cargo.doc
 		docker.build docker.run docker.stop docker.tag docker.push \

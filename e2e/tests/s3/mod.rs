@@ -13,7 +13,7 @@ use rusoto_s3::{PutObjectError, PutObjectRequest, S3Client, S3 as _};
 use super::{sample_file, World, TMP_DIR};
 
 /// URL of S3 HTTP API to run E2E tests against.
-const API_URL: &str = "http://localhost:9294";
+const API_URL: &str = "http://127.0.0.1:9294";
 
 #[when(regex = r"^`(\S+)` file is uploaded to `(\S+)` bucket$")]
 async fn file_uploaded(_: &mut World, key: String, bucket: String) {
