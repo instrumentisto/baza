@@ -14,7 +14,7 @@ const TMP_DIR: &str = "tmp";
 
 #[derive(Debug, Default, WorldInit)]
 struct World {
-    // S3 Object keys to check for validity.
+    /// S3 object keys to check for validity.
     keys_to_check: HashSet<String>,
 }
 

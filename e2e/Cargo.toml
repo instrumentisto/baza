@@ -14,9 +14,9 @@ baza = { package = "baza-lib", path = "../lib" }
 baza-api-s3 = { path = "../api/s3" }
 cucumber = "0.13"
 once_cell = "1.12"
-rusoto_core = { version = "0.48" }
-rusoto_credential =  { version = "0.48" }
-rusoto_s3 = { version = "0.48" }
+rusoto_core = "0.48"
+rusoto_credential = "0.48"
+rusoto_s3 = "0.48"
 tokio = "1.0"
 
 [[test]]

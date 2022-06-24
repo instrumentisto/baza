@@ -35,7 +35,7 @@ async fn symlink_is_uploaded(
 async fn file_is_accessible(_: &mut World, path: String) -> io::Result<()> {
     let stored = async_fs::read(format!("{TMP_DIR}/{path}")).await?;
 
-    assert!(sample_file() == stored, "Bytes don`t match");
+    assert!(sample_file() == stored, "Bytes don't match");
     Ok(())
 }
 
@@ -43,7 +43,7 @@ async fn file_is_accessible(_: &mut World, path: String) -> io::Result<()> {
 async fn keys_table(w: &mut World, step: &Step) {
     w.keys_to_check = step
         .table()
-        .expect("No data table present")
+        .expect("No data table present in the step")
         .rows
         .iter()
         .map(|row| row[0].clone())
@@ -104,10 +104,10 @@ async fn try_put_object(
 /// tested.
 fn s3_client() -> S3Client {
     S3Client::new_with(
-        HttpClient::new().expect("Failed to initialize Rusoto Http client"),
-        StaticProvider::new_minimal("test".to_string(), "test".to_string()),
+        HttpClient::new().expect("Failed to initialize Rusoto HTTP client"),
+        StaticProvider::new_minimal("test".into(), "test".into()),
         Region::Custom {
-            name: "test".to_string(),
+            name: "test".into(),
             endpoint: API_URL.into(),
         },
     )
