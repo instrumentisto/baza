@@ -11,8 +11,7 @@ eq = $(if $(or $(1),$(2)),$(and $(findstring $(1),$(2)),\
 # If $(1) and $(2) strings are equal then $(3), otherwise $(4).
 if_eq = $(if $(call eq,$(1),$(2)),$(3),$(4))
 
-# Process ID of currently runnning Baza instance.
-pid = $(word 1,$(shell ps | grep -v grep | grep 'target/' | grep '/baza'))
+
 
 
 ######################
@@ -28,6 +27,10 @@ CURRENT_BRANCH := $(strip $(if $(call eq,$(CI_SERVER),yes),\
 RUST_VER := 1.61
 VERSION ?= $(strip $(shell grep -m1 'version = "' Cargo.toml | cut -d '"' -f2))
 CARGO_HOME ?= $(strip $(shell dirname $$(dirname $$(which cargo))))
+
+# Process ID of currently runnning project instance.
+PID = $(word 1,$(strip $(shell ps | grep 'baza')))
+
 
 
 
@@ -114,7 +117,7 @@ ifeq ($(start-app),yes)
 endif
 	cargo test -p baza-e2e
 ifeq ($(start-app),yes)
-	kill $(pid)
+	kill $(PID)
 endif
 
 
