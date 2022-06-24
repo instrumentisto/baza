@@ -8,6 +8,8 @@ FROM ghcr.io/instrumentisto/rust:${rust_ver} AS dist
 ARG rustc_mode=release
 ARG rustc_opts=--release
 
+RUN mkdir /out
+
 COPY api/ /app/api/
 COPY lib/ /app/lib/
 COPY e2e/ /app/e2e/
