@@ -15,13 +15,13 @@ use super::{sample_file, World, TMP_DIR};
 /// URL of S3 HTTP API to run E2E tests against.
 const API_URL: &str = "http://localhost:9294";
 
-#[when(regex = r"^'(\S+)' file is uploaded to '(\S+)' bucket$")]
+#[when(regex = r"^`(\S+)` file is uploaded to `(\S+)` bucket$")]
 async fn file_uploaded(_: &mut World, key: String, bucket: String) {
     put_object(bucket, key, sample_file(), None::<String>).await
 }
 
-#[when(regex = "^'(\\S+)' symlink is created on '(\\S+)' bucket \
-                 pointing to '(\\S+)'$")]
+#[when(regex = "^`(\\S+)` symlink is created on `(\\S+)` bucket \
+                 pointing to `(\\S+)`$")]
 async fn symlink_is_uploaded(
     _: &mut World,
     key: String,
@@ -31,11 +31,11 @@ async fn symlink_is_uploaded(
     put_object(bucket, key, &[], Some(original)).await
 }
 
-#[then(regex = r"^the file is (?:stored as|accessible via) '(\S+)'$")]
+#[then(regex = r"^the file is (?:stored as|accessible via) `(\S+)`$")]
 async fn file_is_accessible(_: &mut World, path: String) -> io::Result<()> {
     let stored = async_fs::read(format!("{TMP_DIR}/{path}")).await?;
 
-    assert!(sample_file() == stored, "Bytes don't match");
+    assert!(sample_file() == stored, "Bytes don`t match");
     Ok(())
 }
 
@@ -50,7 +50,7 @@ async fn keys_table(w: &mut World, step: &Step) {
         .collect();
 }
 
-#[then("'InvalidArgument' error is returned")]
+#[then("`InvalidArgument` error is returned")]
 async fn invalid_argument_error(w: &mut World) {
     stream::iter(mem::take(&mut w.keys_to_check))
         .then(|key| try_put_object("data", key, &[], None::<String>))
