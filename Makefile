@@ -19,17 +19,14 @@ if_eq = $(if $(call eq,$(1),$(2)),$(3),$(4))
 ######################
 
 PROJECT_NAME := baza
-RELEASE_BRANCH := release
-MAINLINE_BRANCH := main
-CURRENT_BRANCH := $(strip $(if $(call eq,$(CI_SERVER),yes),\
-	$(CI_COMMIT_REF_NAME),$(shell git branch | grep \* | cut -d ' ' -f2)))
-
 RUST_VER := 1.61
-VERSION ?= $(strip $(shell grep -m1 'version = "' Cargo.toml | cut -d '"' -f2))
 CARGO_HOME ?= $(strip $(shell dirname $$(dirname $$(which cargo))))
 
 # Process ID of currently runnning project instance.
 PID = $(word 1,$(strip $(shell ps | grep 'baza')))
+
+# UID of the user running this Makefile.
+UID := $(shell id -u)
 
 
 
@@ -180,6 +177,7 @@ ifeq ($(rebuild),yes)
 endif
 	mkdir -p .tmp
 	docker run --network=host --rm --name $(PROJECT_NAME) \
+	           -u "$(UID)" -d \
 		       -v "$(PWD)/.tmp":/files $(call docker_tag,$(tag))
 
 

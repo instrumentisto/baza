@@ -42,6 +42,4 @@ FROM scratch AS runtime
 
 COPY --from=dist /out/ /
 
-USER 1000:1000
-
 ENTRYPOINT ["/baza", "--root=/files"]

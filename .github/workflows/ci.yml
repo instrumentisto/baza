@@ -146,7 +146,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: docker-${{ github.run_number }}
-          path: image.tar
+          path: .cache/docker/image.tar
           retention-days: 1
 
 
