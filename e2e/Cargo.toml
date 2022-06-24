@@ -1,0 +1,25 @@
+[package]
+name = "baza-e2e"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.61"
+description = "E2E (end-to-end) tests of this project."
+authors = ["Instrumentisto Team <developer@instrumentisto.com>"]
+license = "BlueOak-1.0.0"
+publish = false
+
+[dev-dependencies]
+async-fs = "1.5"
+baza = { package = "baza-lib", path = "../lib" }
+baza-api-s3 = { path = "../api/s3" }
+cucumber = "0.13"
+once_cell = "1.12"
+rusoto_core = "0.48"
+rusoto_credential = "0.48"
+rusoto_s3 = "0.48"
+tokio = "1.0"
+
+[[test]]
+name = "e2e"
+path = "tests/main.rs"
+harness = false
