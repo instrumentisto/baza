@@ -42,4 +42,6 @@ FROM scratch AS runtime
 
 COPY --from=dist /out/ /
 
+VOLUME ["/files"]
+
 ENTRYPOINT ["/baza", "--root=/files"]
