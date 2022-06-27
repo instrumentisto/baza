@@ -109,6 +109,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: docker-baza-${{ github.run_number }}
+          path: .cache/docker/image.tar
       - run: make docker.untar
 
       - run: make docker.test.e2e start-app=yes \
@@ -169,13 +170,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        if: ${{ matrix.if }}
       - uses: docker/setup-buildx-action@v2
-        if: ${{ matrix.if }}
 
       - uses: actions/download-artifact@v3
         with:
           name: docker-baza-${{ github.run_number }}
+          path: .cache/docker/image.tar
       - run: make docker.untar
 
       - name: Login to GitHub Container Registry
