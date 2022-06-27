@@ -44,4 +44,4 @@ COPY --from=dist /out/ /
 
 VOLUME ["/files"]
 
-ENTRYPOINT ["/baza", "--root=/files"]
+ENTRYPOINT ["/baza", "--root=/files/sub"]
