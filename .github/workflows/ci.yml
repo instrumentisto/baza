@@ -175,7 +175,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: docker-baza-${{ github.run_number }}
-          path: .cache/docker/image.tar
+          path: .cache/docker
       - run: make docker.untar
 
       - name: Login to GitHub Container Registry
