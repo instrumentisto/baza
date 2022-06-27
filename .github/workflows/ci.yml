@@ -109,7 +109,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: docker-baza-${{ github.run_number }}
-          path: .cache/docker/image.tar
+          path: .cache/docker
       - run: make docker.untar
 
       - run: make docker.test.e2e start-app=yes \
