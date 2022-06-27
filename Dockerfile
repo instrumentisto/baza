@@ -9,7 +9,7 @@ ARG rustc_mode=release
 ARG rustc_opts=--release
 
 RUN mkdir -p /out/etc/ && mkdir /out/files \
- && chown 1000:1000 -R /out/files
+ && chown 1001:1001 -R /out/files
 
 COPY api/ /app/api/
 COPY lib/ /app/lib/
@@ -42,9 +42,5 @@ RUN cp /app/target/${rustc_mode}/baza /out/baza \
 FROM scratch AS runtime
 
 COPY --from=dist /out/ /
-
-USER 1000
-
-VOLUME ["/files"]
 
 ENTRYPOINT ["/baza", "--root=/files"]

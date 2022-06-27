@@ -183,7 +183,7 @@ ifeq ($(rebuild),yes)
 endif
 	mkdir -p .tmp
 	docker run --network=host --rm --name $(PROJECT_NAME) \
-	           -u "0:0" \
+	           -u "$(UID)" \
 		       -v "$(PWD)/.tmp":/files $(call docker_tag,$(tag))
 ifneq ($(wait),)
 	sleep $(wait)
