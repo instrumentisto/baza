@@ -183,8 +183,8 @@ ifeq ($(rebuild),yes)
 endif
 	mkdir -p .tmp
 	docker run --network=host --rm --name $(PROJECT_NAME) \
-	           -u "$(UID)" -d \
-		       -v "$(PWD)/.tmp":/files $(call docker_tag,$(tag))
+	           -u "$(UID)" \
+		       -v "$(PWD)/.tmp":/file $(call docker_tag,$(tag))
 ifneq ($(wait),)
 	sleep $(wait)
 endif
@@ -212,8 +212,8 @@ ifeq ($(start-app),yes)
 	make docker.run tag=$(tag) rebuild=$(rebuild) \
 				    debug=$(debug) no-cache=$(no-cache)
 endif
-	docker run --rm --network=host -v "$(PWD)":/app -w /app \
-	           -v "$(abspath $(CARGO_HOME))/registry":/usr/local/cargo/registry\
+	docker run --rm --network=host -v "$(PWD)":/app:z -w /app \
+	           -v "$(abspath $(CARGO_HOME))/registry":/usr/local/cargo/registry:z\
 		ghcr.io/instrumentisto/rust:$(RUST_VER) \
 				make cargo.test.e2e
 
