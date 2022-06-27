@@ -35,7 +35,7 @@ UID := $(shell id -u)
 # Aliases #
 ###########
 
-all: fmt lint cargo.test.unit
+all: fmt lint test.unit
 
 
 build: docker.build
