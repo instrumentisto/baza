@@ -184,7 +184,7 @@ endif
 	mkdir -p .tmp
 	docker run --network=host --rm --name $(PROJECT_NAME) \
 	           -u "$(UID)" \
-		       -v "$(PWD)/.tmp":/file $(call docker_tag,$(tag))
+		       -v "$(PWD)/.tmp":/files $(call docker_tag,$(tag))
 ifneq ($(wait),)
 	sleep $(wait)
 endif
