@@ -152,7 +152,7 @@ cargo.doc:
 # Docker commands #
 ###################
 
-docker_tag = $(PROJECT_NAME):$(or $(strip,$(1)),dev)
+docker_tag = $(PROJECT_NAME):$(or $(strip $(1)),dev)
 docker-tar-dir = .cache/docker
 
 # Build project Docker image.

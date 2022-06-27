@@ -38,8 +38,8 @@ RUN cp /app/target/${rustc_mode}/baza /out/baza \
 #
 
 # https://hub.docker.com/_/scratch
-FROM alpine:latest AS runtime
+FROM scratch AS runtime
 
 COPY --from=dist /out/ /
 
-ENTRYPOINT ["ls", "-la"]
+ENTRYPOINT ["/baza", "--root=/files"]
