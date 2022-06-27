@@ -106,7 +106,7 @@ jobs:
         continue-on-error: true
         if: ${{ !contains(github.event.head_commit.message, '[fresh ci]') }}
 
-      - run: make docker.test.e2e start-app=yes wait=10 \
+      - run: make docker.test.e2e start-app=yes \
                                   tag=build-${{ github.run_number }}
 
 

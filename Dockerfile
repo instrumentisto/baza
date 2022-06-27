@@ -8,8 +8,7 @@ FROM ghcr.io/instrumentisto/rust:${rust_ver} AS dist
 ARG rustc_mode=release
 ARG rustc_opts=--release
 
-RUN mkdir -p /out/etc/ && mkdir /out/files \
- && chown 1001:1001 -R /out/files
+RUN mkdir /out
 
 COPY api/ /app/api/
 COPY lib/ /app/lib/
@@ -39,8 +38,8 @@ RUN cp /app/target/${rustc_mode}/baza /out/baza \
 #
 
 # https://hub.docker.com/_/scratch
-FROM alpine:latest AS runtime
+FROM scratch AS runtime
 
 COPY --from=dist /out/ /
 
-ENTRYPOINT ["ls", "-la"]
+ENTRYPOINT ["/baza", "--root=/files"]
