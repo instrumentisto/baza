@@ -185,9 +185,6 @@ endif
 	docker run --network=host --rm --name $(PROJECT_NAME) \
 	           -u "$(UID)" \
 		       -v "$(PWD)/.tmp":/files $(call docker_tag,$(tag))
-ifneq ($(wait),)
-	sleep $(wait)
-endif
 
 # Stop project's Docker container.
 #
