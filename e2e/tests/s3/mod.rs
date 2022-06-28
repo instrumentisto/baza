@@ -1,6 +1,6 @@
 //! S3 HTTP API E2E (end-to-end) tests.
 
-use std::{collections::HashMap, io, mem};
+use std::{collections::HashMap, io, mem, path::PathBuf};
 
 use baza::futures_lite::{stream, StreamExt};
 use baza_api_s3 as s3;
@@ -31,12 +31,23 @@ async fn symlink_is_uploaded(
     put_object(bucket, key, &[], Some(original)).await
 }
 
-#[then(regex = r"^the file is (?:stored as|accessible via) `(\S+)`$")]
-async fn file_is_accessible(_: &mut World, path: String) -> io::Result<()> {
+#[then(regex = r"^the file is stored as `(\S+)`$")]
+async fn file_is_stored(_: &mut World, path: String) -> io::Result<()> {
     let stored = async_fs::read(format!("{TMP_DIR}/{path}")).await?;
 
     assert!(sample_file() == stored, "Bytes don't match");
     Ok(())
+}
+
+#[then(regex = r"^the file is accessible via `(\S+)`$")]
+async fn file_is_accessible(w: &mut World, path: String) -> io::Result<()> {
+    // We are forced to handle symlinks manually, because Dockerized application
+    // has different root.
+
+    let src = async_fs::read_link(format!("{TMP_DIR}/{path}")).await?;
+    let src = src.components().skip(2).collect::<PathBuf>();
+    file_is_stored(w, src.into_os_string().into_string().expect("Valid String"))
+        .await
 }
 
 #[when("trying to upload files with the following keys:")]

@@ -118,7 +118,7 @@ cargo.test.e2e:
 ifeq ($(start-app),yes)
 	make cargo.run background=yes
 endif
-	cargo test -p baza-e2e
+	cargo test -p baza-e2e --test e2e -- -vv
 ifeq ($(start-app),yes)
 	kill $(PID)
 endif
