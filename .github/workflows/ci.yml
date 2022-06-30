@@ -73,6 +73,15 @@ jobs:
 
       - run: make cargo.fmt check=yes
 
+helm-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: azure/setup-helm@v3
+
+      - run: make helm.lint
+
+
 
 
 
