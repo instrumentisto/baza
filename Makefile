@@ -85,8 +85,9 @@ ifeq ($(rebuild),yes)
 	@make docker.image tag=$(tag) debug=$(debug) no-cache=$(no-cache)
 endif
 	docker run --rm $(if $(call eq,$(background),yes),-d,-it) --name $(NAME) \
-	           -v "$(PWD)/.cache/data":/.cache/data:z \
+	           -u $(shell id -u) \
 	           -p 9294:9294 \
+	           -v "$(PWD)/.cache/data":/.cache/data:z \
 		$(OWNER)/$(NAME):$(or $(tag),dev) -r .cache/data
 else
 	cargo run $(if $(call eq,$(debug),no),--release,) -- -r .cache/data \
