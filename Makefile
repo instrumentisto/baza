@@ -84,6 +84,7 @@ ifeq ($(dockerized),yes)
 ifeq ($(rebuild),yes)
 	@make docker.image tag=$(tag) debug=$(debug) no-cache=$(no-cache)
 endif
+	@mkdir -p .cache/data/
 	docker run --rm $(if $(call eq,$(background),yes),-d,-it) --name $(NAME) \
 	           -u $(shell id -u) \
 	           -p 9294:9294 \
