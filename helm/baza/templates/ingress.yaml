@@ -1,0 +1,53 @@
+{{- range $host := .Values.ingress.hosts }}
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: {{ printf "%s.%s" (include "baza.fullname" $) $host | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+    helm.sh/chart: {{ include "baza.chart" $ | quote }}
+    app.kubernetes.io/name: {{ include "baza.name" $ | quote }}
+    app.kubernetes.io/instance: {{ $.Release.Name | quote }}
+    app.kubernetes.io/managed-by: {{ $.Release.Service | quote }}
+    app.kubernetes.io/component: api
+  {{- with $.Values.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  annotations:
+  {{- if and $.Values.ingress.tls.enabled $.Values.ingress.tls.auto }}
+    kubernetes.io/tls-acme: "true"
+  {{- end }}
+  {{- if not $.Values.ingress.tls.enabled }}
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  {{- end }}
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+  {{- with $.Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  rules:
+  {{- range $h := list $host (printf "www.%s" $host) }}
+    - host: {{ $h | quote }}
+      http:
+        paths:
+          - path: {{ $.Values.ingress.subPath | trimSuffix "/" }}/(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ include "baza.fullname" $ | quote }}
+                port:
+                  name: http
+  {{- end }}
+{{- if $.Values.ingress.tls.enabled }}
+  tls:
+    - secretName: {{ if $.Values.ingress.tls.auto -}}
+                    {{ printf "%s.tls" ($host | trunc 48 | trimSuffix ".") | quote }}
+                  {{- else -}}
+                    {{ required (print `TLS Secret name must be specified for host ` $host ` !`) (index $.Values.ingress.tls.secretName $host) | quote }}
+                  {{- end }}
+      hosts:
+        - {{ $host | quote }}
+        - {{ printf "www.%s" $host | quote }}
+{{- end }}
+{{- end }}

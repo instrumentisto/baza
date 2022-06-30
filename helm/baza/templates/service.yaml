@@ -1,0 +1,56 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ include "baza.fullname" . | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    helm.sh/chart: {{ include "baza.chart" . | quote }}
+    app.kubernetes.io/name: {{ include "baza.name" . | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/component: api
+  {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: {{ include "baza.name" . | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/component: api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+
+{{- range $n := until (.Values.statefulset.replicas | int) }}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ printf "%s-%d" (include "baza.fullname" $) $n | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+    helm.sh/chart: {{ include "baza.chart" $ | quote }}
+    app.kubernetes.io/name: {{ include "baza.name" $ | quote }}
+    app.kubernetes.io/instance: {{ $.Release.Name | quote }}
+    app.kubernetes.io/managed-by: {{ $.Release.Service | quote }}
+    app.kubernetes.io/component: api
+  {{- with $.Values.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ include "baza.name" $ | quote }}
+    app.kubernetes.io/instance: {{ $.Release.Name | quote }}
+    app.kubernetes.io/component: api
+    statefulset.kubernetes.io/pod-name: {{ printf "%s-%d" (include "baza.fullname" $) $n | quote }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+{{- end }}

@@ -1,0 +1,90 @@
+image:
+  repository: ghcr.io/instrumentisto/baza
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Additional labels to apply to all Kubernetes resources created by this chart.
+labels: {}
+  # app.kubernetes.io/part-of: baza
+
+# Baza S3 server arguments:
+conf:
+  port: 9294
+  logLevel: info
+
+statefulset:
+  replicas: 1
+  revisionHistoryLimit: 0
+
+  # Optional revision number that may used for fine-grained Deployment rollouts.
+  revision: ""
+
+  annotations: {}
+    # kubernetes.io/change-cause=kubectl set ...
+
+  # Affinity rules for scheduling Pods of this StatefulSet on Nodes.
+  # https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#node-affinity
+  nodeAffinity: {}
+    # requiredDuringSchedulingIgnoredDuringExecution:
+    #   nodeSelectorTerms:
+    #     - matchExpressions:
+    #         - key: node-label-key
+    #           operator: In
+    #           values: ["node-label-value"]
+  # Inter-Pod affinity rules for scheduling Pods of this StatefulSet.
+  # https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  podAffinity: {}
+  # Anti-affinity rules for scheduling Pods of this StatefulSet.
+  # https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  # You may either toggle options below for default anti-affinity rules,
+  # or specify the whole set of anti-affinity rules instead of them.
+  podAntiAffinity:
+    # The topology key to be used.
+    # Can be used to spread across different nodes, AZs, regions etc.
+    topologyKey: kubernetes.io/hostname
+    # Type of anti-affinity rules: either `soft`, `hard` or empty value (which
+    # disables anti-affinity rules).
+    type: hard
+    # Weight for `soft` anti-affinity rules.
+    # Doesn't apply for other anti-affinity types.
+    weight: 100
+
+  affinity: {}
+    # nodeAffinity:
+    #   requiredDuringSchedulingIgnoredDuringExecution:
+    #     nodeSelectorTerms:
+    #       - matchExpressions:
+    #         - key: node-label-key
+    #           operator: In
+    #           values: ["node-label-value"]
+
+  tolerations: []
+    # - key: "node.alpha.kubernetes.io/unreachable"
+    #   operator: "Exists"
+    #   effect: "NoExecute"
+
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+ingress:
+  # Hosts must be specified without `www.` part.
+  hosts:
+    - baza.test
+
+  # Optional URL sub-path to prepend Ingress endpoints with.
+  subPath: ""  # /baza/
+
+  tls:
+    enabled: no
+    auto: no
+    # Not required when `auto: yes`.
+    secretName:
+      back.soc.test: baza.test.tls
+
+  annotations:
+    kubernetes.io/ingress.class: nginx

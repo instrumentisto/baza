@@ -273,12 +273,30 @@ docker.untar:
 
 
 
+#################
+# Helm commands #
+#################
+
+helm-chart-dir = helm/baza
+
+# Lint project Helm chart.
+#
+# Usage:
+#	make helm.lint
+
+helm.lint:
+	helm lint $(helm-chart-dir)/
+
+
+
+
 ##################
 # .PHONY section #
 ##################
 
 .PHONY: all build docs stop fmt lint test test.unit test.e2e run \
         cargo.fmt cargo.clippy cargo.run cargo.test.e2e \
-		cargo.test.unit cargo.doc
+		cargo.test.unit cargo.doc \
 		docker.build docker.run docker.stop docker.tag docker.push \
-		docker.tar docker.untar
+		docker.tar docker.untar \
+		helm.lint
