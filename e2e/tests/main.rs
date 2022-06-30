@@ -2,15 +2,15 @@
 
 mod s3;
 
-use std::{collections::HashSet, convert::Infallible};
+use std::{collections::HashSet, convert::Infallible, fs};
 
 use cucumber::WorldInit;
 use once_cell::sync::Lazy;
 
-use baza::{async_trait, futures_lite::StreamExt as _};
+use baza::{async_trait, futures::TryStreamExt as _};
 
-/// Temporary directory for storing files during E2E tests running.
-const TMP_DIR: &str = "../.tmp";
+/// Path to the directory where files are stored during E2E tests running.
+const DATA_DIR: &str = "../.cache/data";
 
 #[derive(Debug, Default, WorldInit)]
 struct World {
@@ -29,7 +29,7 @@ impl cucumber::World for World {
 
 #[tokio::main]
 async fn main() -> Result<(), String> {
-    clear_tmp_dir().await?;
+    clear_data_dir().await?;
 
     World::cucumber()
         .steps(World::collection())
@@ -39,41 +39,37 @@ async fn main() -> Result<(), String> {
         .run_and_exit("tests")
         .await;
 
-    clear_tmp_dir().await
+    clear_data_dir().await
 }
 
-/// Clears the [`TMP_DIR`].
-async fn clear_tmp_dir() -> Result<(), String> {
-    let is_dir = async_fs::metadata(TMP_DIR)
+/// Clears contents of the [`DATA_DIR`].
+async fn clear_data_dir() -> Result<(), String> {
+    async_fs::metadata(DATA_DIR)
         .await
-        .map(|m| m.is_dir())
-        .map_err(|e| format!("Failed to check temporary directory: {e}"))?;
+        .map_err(|e| format!("Cannot stat `{DATA_DIR}` dir: {e}"))?
+        .is_dir()
+        .then(|| ())
+        .ok_or_else(|| format!("`{DATA_DIR}` is not a dir"))?;
 
-    if !is_dir {
-        return Err("TMP_DIR is not a directory".to_string());
-    }
-
-    // We can't use `async_fs::remove_dir_all` on `TMP_DIR` directly because
-    // doing so breaks Docker bind mount.
-    async_fs::read_dir(TMP_DIR)
+    // We cannot use `async_fs::remove_dir_all` on `DATA_DIR` directly, because
+    // doing so breaks the running S3 server (it looses its directory).
+    async_fs::read_dir(DATA_DIR)
         .await
-        .map_err(|e| format!("Failed to read temporary directory: {e}"))?
-        .then(|res| async {
-            match res {
-                Ok(entry) => async_fs::remove_dir_all(entry.path()).await,
-                Err(e) => Err(e),
-            }
+        .map_err(|e| format!("Cannot read `{DATA_DIR}` dir: {e}"))?
+        .map_err(|e| format!("Cannot read entry from `{DATA_DIR}` dir: {e}"))
+        .try_for_each(|entry| async move {
+            let path = entry.path();
+            async_fs::remove_dir_all(path.as_path()).await.map_err(|e| {
+                format!("Cannot remove `{}` dir: {e}", path.display())
+            })
         })
-        .try_collect::<_, _, Vec<_>>()
         .await
-        .map(drop)
-        .map_err(|e| format!("Failed to remove temporary directory entry: {e}"))
 }
 
 /// Reads the `samples/` file and memoizes it.
 fn sample_file() -> &'static [u8] {
     static SAMPLE: Lazy<Vec<u8>> = Lazy::new(|| {
-        std::fs::read("samples/rms.jpg").expect("Sample file is missing")
+        fs::read("samples/rms.jpg").expect("Sample file is missing")
     });
 
     &*SAMPLE

@@ -169,7 +169,7 @@ dependencies = [
  "async-fs",
  "async-trait",
  "derive_more",
- "futures-lite",
+ "futures",
  "tracerr",
  "tracing",
 ]

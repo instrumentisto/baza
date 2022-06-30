@@ -8,9 +8,6 @@ comma := ,
 eq = $(if $(or $(1),$(2)),$(and $(findstring $(1),$(2)),\
                                 $(findstring $(2),$(1))),1)
 
-# If $(1) and $(2) strings are equal then $(3), otherwise $(4).
-if_eq = $(if $(call eq,$(1),$(2)),$(3),$(4))
-
 
 
 
@@ -18,15 +15,15 @@ if_eq = $(if $(call eq,$(1),$(2)),$(3),$(4))
 # Project parameters #
 ######################
 
-PROJECT_NAME := baza
-RUST_VER := 1.61
-CARGO_HOME ?= $(strip $(shell dirname $$(dirname $$(which cargo))))
+NAME := baza
+OWNER := $(or $(GITHUB_REPOSITORY_OWNER),instrumentisto)
+REGISTRIES := $(strip $(subst $(comma), ,\
+	$(shell grep -m1 'registry: \["' .github/workflows/ci.yml \
+	        | cut -d':' -f2 | tr -d '"][')))
+VERSION ?= $(strip $(shell grep -m1 'version = "' Cargo.toml | cut -d'"' -f2))
 
-# Process ID of currently runnning project instance.
-PID = $(word 1,$(strip $(shell ps | grep 'baza')))
-
-# UID of the user running this Makefile.
-UID := $(shell id -u)
+RUST_VER := $(strip $(shell grep -m1 'RUST_VER: ' .github/workflows/ci.yml \
+                            | cut -d':' -f2 | tr -d '"'))
 
 
 
@@ -38,31 +35,63 @@ UID := $(shell id -u)
 all: fmt lint test.unit
 
 
-build: docker.build
-
-
 docs: cargo.doc
-
-
-stop: docker.stop
 
 
 fmt: cargo.fmt
 
 
-lint: cargo.clippy
+image: docker.image
+
+
+lint: cargo.lint
 
 
 test: test.e2e test.unit
 
 
-test.unit: cargo.test.unit
 
 
-test.e2e: cargo.test.e2e
+####################
+# Running commands #
+####################
+
+# Stop running project in local environment.
+#
+# Usage:
+#	make down [dockerized=(no|yes)]
+
+down:
+ifeq ($(dockerized),yes)
+	-docker stop $(NAME)
+else
+	$(eval pid := $(shell ps ax | grep -v grep | grep 'target/' | grep '/baza'))
+	$(if $(call eq,$(pid),),,kill $(strip $(word 1,$(pid))))
+endif
 
 
-run: docker.run
+# Run project in local environment.
+#
+# Usage:
+#	make up [background=(no|yes)]
+#	        [debug=(yes|no)]
+#	        [( [dockerized=no]
+#	         | dockerized=yes [tag=(dev|<docker-tag>)]
+#	           [( [rebuild=no] | rebuild=yes [no-cache=(no|yes)] )] )]
+
+up: down
+ifeq ($(dockerized),yes)
+ifeq ($(rebuild),yes)
+	@make docker.image tag=$(tag) debug=$(debug) no-cache=$(no-cache)
+endif
+	docker run --rm $(if $(call eq,$(background),yes),-d,-it) --name $(NAME) \
+	           -v "$(PWD)/.cache/data":/.cache/data:z \
+	           -p 9294:9294 \
+		$(OWNER)/$(NAME):$(or $(tag),dev) -r .cache/data
+else
+	cargo run $(if $(call eq,$(debug),no),--release,) -- -r .cache/data \
+		$(if $(call eq,$(background),yes),&,)
+endif
 
 
 
@@ -71,14 +100,22 @@ run: docker.run
 # Cargo commands #
 ##################
 
+cargo-crate = $(if $(call eq,$(crate),),--workspace,-p $(crate))
 
-# Build Rust sources.
+
+# Generate crates documentation from Rust sources.
 #
 # Usage:
-#	make cargo.build [debug=(yes|no)]
+#	make cargo.doc [crate=<crate-name>] [private=(yes|no)]
+#	               [open=(yes|no)] [clean=(no|yes)]
 
-cargo.build:
-	cargo build $(call if_eq,$(debug),no,--release,)
+cargo.doc:
+ifeq ($(clean),yes)
+	@rm -rf target/doc/
+endif
+	cargo doc $(cargo-crate) --all-features \
+		$(if $(call eq,$(private),no),,--document-private-items) \
+		$(if $(call eq,$(open),no),,--open)
 
 
 # Format Rust sources with rustfmt.
@@ -90,60 +127,55 @@ cargo.fmt:
 	cargo +nightly fmt --all $(if $(call eq,$(check),yes),-- --check,)
 
 
-# Lint Rust sources with clippy.
+# Lint Rust sources with Clippy.
 #
 # Usage:
-#	make cargo.clippy
+#	make cargo.lint [crate=<crate-name>]
 
-cargo.clippy:
-	cargo clippy --workspace -- -D clippy::pedantic -D warnings
+cargo.lint:
+	cargo clippy $(cargo-crate) --all-features -- -D warnings
 
 
-# Run application.
+
+
+####################
+# Testing commands #
+####################
+
+# Run project E2E tests.
 #
 # Usage:
-#	make cargo.run [background=(yes|no)] [debug=(yes|no)]
+#	make test.e2e [only=<regex>]
+#	              [( [start-app=no]
+#	               | start-app=yes [debug=(yes|no)]
+#	                 [( [dockerized=no]
+#	                    | dockerized=yes [tag=(dev|<docker-tag>)]
+#	                      [( [rebuild=no] |
+#	                         rebuild=yes [no-cache=(no|yes)] )] )] )]
 
-cargo.run:
-	cargo run $(call if_eq,$(debug),no,--release,) -- -r ./.tmp \
-			  $(call if_eq,$(background),yes,&,)
-
-
-# Run E2E tests of the project.
-#
-# Usage:
-#	make cargo.test.e2e [start-app=(yes|no)]
-
-cargo.test.e2e:
+test.e2e:
 ifeq ($(start-app),yes)
-	make cargo.run background=yes
+	@make up background=yes debug=$(debug) \
+	         dockerized=$(dockerized) tag=$(tag) \
+	         rebuild=$(rebuild) no-cache=$(no-cache)
+	sleep 5
 endif
-	cargo test -p baza-e2e --test e2e -- -vv
+	cargo test -p baza-e2e --test e2e -- -vv \
+		$(if $(call eq,$(only),),,--name '$(only)')
 ifeq ($(start-app),yes)
-	kill $(PID)
+	@make down dockerized=$(dockerized)
 endif
 
 
-# Run unit tests of the project.
+# Run project unit tests.
 #
 # Usage:
-#	make cargo.test.unit [crate=<crate-name>]
+#	make test.unit [crate=<crate-name>]
 
-cargo.test.unit:
-ifeq ($(crate),)
-	cargo test --all --exclude baza-e2e
-else
-	cargo test -p $(crate)
-endif
-
-
-# Generate project documentation of Rust sources.
-#
-# Usage:
-#	make cargo.doc [open=(yes|no)]
-
-cargo.doc:
-	cargo doc --workspace $(call if_eq,$(open),yes,--open,)
+test.unit:
+	cargo test \
+		$(if $(call eq,$(crate),),--workspace --exclude baza-e2e,-p $(crate)) \
+		--all-features
 
 
 
@@ -152,123 +184,95 @@ cargo.doc:
 # Docker commands #
 ###################
 
-docker_tag = $(PROJECT_NAME):$(or $(strip $(1)),dev)
-docker-tar-dir = .cache/docker
+docker-registries = $(strip $(if $(call eq,$(registries),),\
+                            $(REGISTRIES),$(subst $(comma), ,$(registries))))
+docker-tags = $(strip $(if $(call eq,$(tags),),\
+                      $(VERSION),$(subst $(comma), ,$(tags))))
+
 
 # Build project Docker image.
 #
 # Usage:
-#	make docker.build [tag=(dev|<tag>)] [debug=(yes|no)] [no-cache=(no|yes)]
+#	make docker.image [tag=(dev|<docker-tag>)] [no-cache=(no|yes)]
+#	                  [debug=(yes|no)]
 
-docker.build:
+github_url := $(strip $(or $(GITHUB_SERVER_URL),https://github.com))
+github_repo := $(strip $(or $(GITHUB_REPOSITORY),$(OWNER)/$(NAME)))
+
+docker.image:
 	docker build --network=host --force-rm \
-		$(call if_eq,$(no-cache),yes,--no-cache --pull,) \
+		$(if $(call eq,$(no-cache),yes),--no-cache --pull,) \
 		--build-arg rust_ver=$(RUST_VER) \
-		--build-arg rustc_mode=$(call if_eq,$(debug),yes,debug,release) \
-		--build-arg rustc_opts=$(call if_eq,$(debug),yes,,--release,) \
-		-t $(call docker_tag,$(tag)) .
+		--build-arg rustc_mode=$(if $(call eq,$(debug),no),release,debug) \
+		--build-arg rustc_opts=$(if $(call eq,$(debug),no),--release,) \
+		--label org.opencontainers.image.source=$(github_url)/$(github_repo) \
+		--label org.opencontainers.image.revision=$(strip \
+			$(shell git show --pretty=format:%H --no-patch)) \
+		--label org.opencontainers.image.version=$(strip $(VERSION)) \
+		-t $(OWNER)/$(NAME):$(or $(tag),dev) ./
+# TODO: Enable after first release.
+#		--label org.opencontainers.image.version=$(strip \
+#			$(shell git describe --tags --dirty))
 
 
-# Run project in Docker container.
+# Manually push project Docker images to container registries.
 #
 # Usage:
-#	make docker.run [tag=(dev|<tag>)]
-#                   [rebuild=no |
-#                    rebuild=yes [debug=(yes|no)] [no-cache=(yes|no)]]
-
-docker.run:
-	-make docker.stop
-ifeq ($(rebuild),yes)
-	make docker.build tag=$(tag) debug=$(debug) no-cache=$(no-cache)
-endif
-	mkdir -p .tmp
-	docker run --network=host --rm --name $(PROJECT_NAME) \
-	           -u "$(UID)" -d \
-		       -v "$(PWD)/.tmp":/files $(call docker_tag,$(tag))
-
-# Stop project's Docker container.
-#
-# Usage:
-#	make docker.stop
-
-docker.stop:
-	docker stop $(PROJECT_NAME)
-
-
-# Run E2E tests of the project in a Docker container.
-#
-# Usage:
-#	make docker.test.e2e
-#     [start-app=no |
-#      start-app=yes [tag=(dev|<tag>)]
-#                    [rebuild=no |
-#                    rebuild=yes [debug=(yes|no)] [no-cache=(yes|no)]]]
-
-docker.test.e2e:
-ifeq ($(start-app),yes)
-	make docker.run tag=$(tag) rebuild=$(rebuild) \
-				    debug=$(debug) no-cache=$(no-cache)
-endif
-	docker run --rm --network=host -v "$(PWD)":/app:z -w /app \
-	           -v "$(abspath $(CARGO_HOME))/registry":/usr/local/cargo/registry:z\
-		ghcr.io/instrumentisto/rust:$(RUST_VER) \
-				make cargo.test.e2e
-
-ifeq ($(start-app),yes)
-	make docker.stop
-endif
-
-
-# Tag project Docker image with given tags.
-#
-# Usage:
-#	make docker.tag [of=(dev|<of-tag>)] [tags=(dev|<with-t1>[,<with-t2>...])]
-
-docker.tag:
-	$(foreach tag,$(subst $(comma), ,$(or $(tags),dev)),\
-		$(call docker.tag.do,$(or $(of),dev),$(tag)))
-define docker.tag.do
-	$(eval from := $(strip $(1)))
-	$(eval to := $(strip $(2)))
-	$(docker-env) \
-	docker tag $(call docker_tag,$(from)) $(call docker_tag,$(to))
-endef
-
-
-# Push project Docker images to Github Container Registry.
-#
-# Usage:
-#	make docker.push [tags=(dev|<t1>[,<t2>...])]
+#	make docker.push [tags=($(VERSION)|<docker-tag-1>[,<docker-tag-2>...])]
+#	                 [registries=($(REGISTRIES)|<prefix-1>[,<prefix-2>...])]
 
 docker.push:
-	$(foreach tag,$(subst $(comma), ,$(or $(tags),dev)),\
-		$(call docker.push.do,$(tag)))
+	$(foreach tag,$(subst $(comma), ,$(docker-tags)),\
+		$(foreach registry,$(subst $(comma), ,$(docker-registries)),\
+			$(call docker.push.do,$(registry),$(tag))))
 define docker.push.do
-	$(eval tag := $(strip $(1)))
-	docker push $(call docker_tag,$(tag))
+	$(eval repo := $(strip $(1)))
+	$(eval tag := $(strip $(2)))
+	docker push $(repo)/$(OWNER)/$(NAME):$(tag)
 endef
 
 
-# Save project Docker image in a tarball file.
+# Tag project Docker image with the given tags.
 #
 # Usage:
-#	make docker.tar [name=(image|<name>)] [tag=(dev|<tag>)]
+#	make docker.tags [of=($(VERSION)|<docker-tag>)]
+#	                 [tags=($(VERSION)|<docker-tag-1>[,<docker-tag-2>...])]
+#	                 [registries=($(REGISTRIES)|<prefix-1>[,<prefix-2>...])]
+
+docker.tags:
+	$(foreach tag,$(subst $(comma), ,$(docker-tags)),\
+		$(foreach registry,$(subst $(comma), ,$(docker-registries)),\
+			$(call docker.tags.do,$(or $(of),$(VERSION)),$(registry),$(tag))))
+define docker.tags.do
+	$(eval from := $(strip $(1)))
+	$(eval repo := $(strip $(2)))
+	$(eval to := $(strip $(3)))
+	docker tag $(OWNER)/$(NAME):$(from) $(repo)/$(OWNER)/$(NAME):$(to)
+endef
+
+
+# Save project Docker images to a tarball file.
+#
+# Usage:
+#	make docker.tar [to-file=(.cache/docker/image.tar|<file-path>)]
+#	                [tags=($(VERSION)|<docker-tag-1>[,<docker-tag-2>...])]
+
+docker-tar-file = $(or $(to-file),.cache/docker/image.tar)
 
 docker.tar:
-	@mkdir -p $(docker-tar-dir)/
-	docker save \
-		-o $(docker-tar-dir)/$(or $(name),image).tar \
-			$(call docker_tag,$(tag))
+	@mkdir -p $(dir $(docker-tar-file))
+	docker save -o $(docker-tar-file) \
+		$(foreach tag,$(subst $(comma), ,$(or $(tags),$(VERSION))),\
+			$(OWNER)/$(NAME):$(tag))
 
 
 # Load project Docker images from a tarball file.
 #
 # Usage:
-#	make docker.untar [name=(image|<name>)]
+#	make docker.untar [from-file=(.cache/docker/image.tar|<file-path>)]
 
 docker.untar:
-	docker load \
-		-i $(docker-tar-dir)/$(or $(name),image).tar
+	docker load -i $(or $(from-file),.cache/docker/image.tar)
 
 
 
@@ -277,8 +281,7 @@ docker.untar:
 # .PHONY section #
 ##################
 
-.PHONY: all build docs stop fmt lint test test.unit test.e2e run \
-        cargo.fmt cargo.clippy cargo.run cargo.test.e2e \
-		cargo.test.unit cargo.doc
-		docker.build docker.run docker.stop docker.tag docker.push \
-		docker.tar docker.untar
+.PHONY: all docs down fmt image lint test up \
+        cargo.doc cargo.fmt cargo.lint \
+        docker.image docker.tags docker.push docker.tar docker.untar \
+        test.e2e test.unit

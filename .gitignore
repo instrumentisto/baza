@@ -3,5 +3,5 @@
 /*.iml
 .DS_Store
 
-.cache
+/.cache/
 /target/
