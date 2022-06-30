@@ -181,7 +181,7 @@ jobs:
     name: Release Docker image
     needs: ["docker", "test-e2e"]
     if: ${{ github.event_name == 'push'
-            && (github.ref == 'refs/heads/main
+            && (github.ref == 'refs/heads/main'
                 || startsWith(github.ref, 'refs/tags/v')) }}
     strategy:
       fail-fast: false
