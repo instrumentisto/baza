@@ -149,7 +149,7 @@ jobs:
                   no-cache=${{ (env.CACHE == 'true' && 'no') || 'yes' }}
 
       - run: make docker.tar
-                  tag=build-${{ github.run_number }}
+                  tags=build-${{ github.run_number }}
       - uses: actions/upload-artifact@v3
         with:
           name: docker-${{ github.run_number }}
