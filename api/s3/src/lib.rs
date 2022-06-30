@@ -16,11 +16,11 @@ use s3_server::{
 use baza::{
     async_trait,
     derive_more::{Display, Error, From},
-    futures_lite::future,
+    futures::future,
     tracing, CreateFile, CreateSymlink, Exec, RelativePath,
 };
 
-/// [`dto::PutObjectRequest::metadata`] key where [`Symlink::original`] is
+/// [`dto::PutObjectRequest::metadata`] key where [`CreateSymlink::src`] is
 /// expected to be provided.
 pub const SYMLINK_META_KEY: &str = "symlink-to";
 
@@ -39,9 +39,8 @@ where
 {
     let service = S3Service::new(S3(storage)).into_shared();
     let listener = TcpListener::bind(addr)?;
-    let make_service = make_service_fn(move |_| {
-        future::ready(Ok::<_, Infallible>(service.clone()))
-    });
+    let make_service =
+        make_service_fn(move |_| future::ok::<_, Infallible>(service.clone()));
 
     tracing::info!("Starting S3 HTTP Server");
     Ok(Server::from_tcp(listener)?.serve(make_service).await?)

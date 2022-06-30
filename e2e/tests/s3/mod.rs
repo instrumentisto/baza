@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, io, mem};
 
-use baza::futures_lite::{stream, StreamExt};
+use baza::futures::{stream, StreamExt as _};
 use baza_api_s3 as s3;
 
 use cucumber::{gherkin::Step, then, when};
@@ -10,7 +10,7 @@ use rusoto_core::{region::Region, HttpClient, RusotoError};
 use rusoto_credential::StaticProvider;
 use rusoto_s3::{PutObjectError, PutObjectRequest, S3Client, S3 as _};
 
-use super::{sample_file, World, TMP_DIR};
+use super::{sample_file, World, DATA_DIR};
 
 /// URL of S3 HTTP API to run E2E tests against.
 const API_URL: &str = "http://localhost:9294";
@@ -31,12 +31,28 @@ async fn symlink_is_uploaded(
     put_object(bucket, key, &[], Some(original)).await
 }
 
-#[then(regex = r"^the file is (?:stored as|accessible via) `(\S+)`$")]
-async fn file_is_accessible(_: &mut World, path: String) -> io::Result<()> {
-    let stored = async_fs::read(format!("{TMP_DIR}/{path}")).await?;
+#[then(regex = r"^the file is stored as `(\S+)`$")]
+async fn file_is_stored(_: &mut World, path: String) -> io::Result<()> {
+    let stored = async_fs::read(format!("{DATA_DIR}/{path}")).await?;
 
     assert!(sample_file() == stored, "Bytes don't match");
     Ok(())
+}
+
+#[then(regex = r"^the file is accessible via `(\S+)`$")]
+async fn file_is_accessible(w: &mut World, path: String) -> io::Result<()> {
+    // We are forced to handle symlinks manually, because Dockerized application
+    // has different absolute paths.
+    let src = async_fs::read_link(format!("{DATA_DIR}/{path}"))
+        .await?
+        .display()
+        .to_string()
+        .split(DATA_DIR.trim_matches('.').trim_matches('/'))
+        .nth(1)
+        .unwrap()
+        .trim_matches('/')
+        .to_owned();
+    file_is_stored(w, src).await
 }
 
 #[when("trying to upload files with the following keys:")]
@@ -54,7 +70,9 @@ async fn keys_table(w: &mut World, step: &Step) {
 async fn invalid_argument_error(w: &mut World) {
     stream::iter(mem::take(&mut w.keys_to_check))
         .then(|key| try_put_object("data", key, &[], None::<String>))
-        .for_each(assert_invalid_argument)
+        .for_each(|res| async move {
+            assert_invalid_argument(res);
+        })
         .await;
 }
 

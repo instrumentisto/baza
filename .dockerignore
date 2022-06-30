@@ -1,0 +1,14 @@
+*
+
+# Sources and manifest.
+!Cargo.toml
+!Cargo.lock
+!src/
+!README.md
+
+# Project sub-crates.
+!api/s3/
+!lib/
+
+# E2E tests sources and manifest.
+!e2e/Cargo.toml

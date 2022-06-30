@@ -2,12 +2,12 @@ use std::{fmt, io, path::PathBuf};
 
 use async_fs::File;
 use derive_more::{Display, Error};
-use futures_lite::{pin, AsyncWriteExt as _, Stream, StreamExt as _};
+use futures::{pin_mut, AsyncWriteExt as _, Stream, StreamExt as _};
 use tracerr::Traced;
 
 pub use async_trait::async_trait;
 pub use derive_more;
-pub use futures_lite;
+pub use futures;
 pub use tracing;
 
 /// Execution of a filesystem operation.
@@ -84,7 +84,7 @@ where
         let mut f = File::create(path).await.map_err(tracerr::wrap!())?;
 
         let bytes = op.bytes;
-        pin!(bytes);
+        pin_mut!(bytes);
         while let Some(res) = bytes.next().await {
             f.write_all(res.map_err(tracerr::wrap!())?.as_ref())
                 .await
@@ -118,6 +118,7 @@ impl Exec<CreateSymlink> for Storage {
                 .map_err(tracerr::wrap!())?;
         }
 
+        // TODO: Overwrite already existing link, as `CreateFile` does.
         async_fs::unix::symlink(self.absolutize(op.src), dest)
             .await
             .map_err(tracerr::wrap!())
@@ -129,15 +130,16 @@ impl Exec<CreateSymlink> for Storage {
 /// # Format
 ///
 /// The following [`PathBuf`] components are forbidden:
-/// - Root (leading `/`)
-/// - CurDir (`.`)
-/// - ParentDir (`..`)
+/// - root (leading `/`)
+/// - current directory (`.`)
+/// - parent directory (`..`)
 /// - empty component (`//`)
 #[derive(Clone, Debug)]
 pub struct RelativePath(PathBuf);
 
 impl RelativePath {
     /// Joins another [`RelativePath`]s to this one.
+    #[must_use]
     pub fn join(mut self, other: RelativePath) -> Self {
         self.0.push(other.0);
         self
