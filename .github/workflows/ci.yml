@@ -73,7 +73,7 @@ jobs:
 
       - run: make cargo.fmt check=yes
 
-helm-lint:
+  helm-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
