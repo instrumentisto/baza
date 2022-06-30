@@ -1,3 +1,4 @@
+{{- if .Values.ingress.enabled }}
 {{- range $host := .Values.ingress.hosts }}
 ---
 kind: Ingress
@@ -10,7 +11,6 @@ metadata:
     app.kubernetes.io/name: {{ include "baza.name" $ | quote }}
     app.kubernetes.io/instance: {{ $.Release.Name | quote }}
     app.kubernetes.io/managed-by: {{ $.Release.Service | quote }}
-    app.kubernetes.io/component: api
   {{- with $.Values.labels }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -49,5 +49,6 @@ spec:
       hosts:
         - {{ $host | quote }}
         - {{ printf "www.%s" $host | quote }}
+{{- end }}
 {{- end }}
 {{- end }}

@@ -30,17 +30,3 @@ Create chart name and version as used by the chart label.
 {{- define "baza.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 55 | trimSuffix "-" -}}
 {{- end -}}
-
-{{/*
-Call template of the nested sub-chart in its context.
-*/}}
-{{- define "baza.call-nested" -}}
-{{- $dot := index . 0 -}}
-{{- $subchart := index . 1 | splitList "." -}}
-{{- $template := index . 2 -}}
-{{- $values := $dot.Values -}}
-{{- range $subchart -}}
-  {{- $values = index $values . -}}
-{{- end -}}
-{{- include $template (dict "Chart" (dict "Name" (last $subchart)) "Values" $values "Release" $dot.Release "Capabilities" $dot.Capabilities) -}}
-{{- end -}}

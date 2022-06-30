@@ -1,6 +1,6 @@
 //! S3 HTTP API E2E (end-to-end) tests.
 
-use std::{collections::HashMap, io, mem, path::PathBuf};
+use std::{collections::HashMap, io, mem};
 
 use baza::futures::{stream, StreamExt as _};
 use baza_api_s3 as s3;
