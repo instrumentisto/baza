@@ -104,6 +104,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: docker-${{ github.run_number }}
+          path: .cache/docker/
       - run: make docker.untar
 
       - run: make test.e2e start-app=yes dockerized=yes
@@ -197,6 +198,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: docker-${{ github.run_number }}
+          path: .cache/docker/
         if: ${{ steps.skip.outputs.no == 'true' }}
       - run: make docker.untar
         if: ${{ steps.skip.outputs.no == 'true' }}
