@@ -103,6 +103,12 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data/
+            - name: nginx-conf
+              mountPath: /etc/nginx
+              readOnly: true
+              name: nginx-conf
+            - name: log
+              mountPath: /var/log/nginx
         {{- with .Values.statefulset.resources }}
           resources: {{- toYaml . | nindent 12 }}
         {{- end }}
@@ -121,3 +127,12 @@ spec:
         {{- else }}
           emptyDir: {}
         {{- end }}
+        - name: nginx-conf
+          configMap:
+            name: nginx-conf
+            items:
+              - key: nginx.conf
+                path: nginx.conf
+        - name: log
+          emptyDir: {}
+
