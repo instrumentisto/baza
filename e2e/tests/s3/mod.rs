@@ -5,7 +5,7 @@ use std::{collections::HashMap, io, mem};
 use baza::futures::{stream, StreamExt as _};
 use baza_api_s3 as s3;
 
-use cucumber::{gherkin::Step, then, when};
+use cucumber::{gherkin::Step, given, then, when};
 use rusoto_core::{region::Region, HttpClient, RusotoError};
 use rusoto_credential::StaticProvider;
 use rusoto_s3::{PutObjectError, PutObjectRequest, S3Client, S3 as _};
@@ -15,35 +15,59 @@ use super::{sample_file, World, DATA_DIR};
 /// URL of S3 HTTP API to run E2E tests against.
 const API_URL: &str = "http://localhost:9294";
 
-#[when(regex = r"^`(\S+)` file is uploaded to `(\S+)` bucket$")]
-async fn file_uploaded(_: &mut World, key: String, bucket: String) {
-    put_object(bucket, key, sample_file(), None::<String>).await
+#[given(regex = r"^`(\S+)` is uploaded to `(\S+)` bucket as `(\S+)`$")]
+#[when(regex = r"^`(\S+)` is uploaded to `(\S+)` bucket as `(\S+)`$")]
+async fn file_uploaded(
+    w: &mut World,
+    sample: String,
+    bucket: String,
+    key: String,
+) {
+    put_object(
+        bucket,
+        w.unique.filename(key),
+        sample_file(sample),
+        None::<String>,
+    )
+    .await
 }
 
+#[given(regex = "^`(\\S+)` symlink is created on `(\\S+)` bucket \
+                 pointing to `(\\S+)`$")]
 #[when(regex = "^`(\\S+)` symlink is created on `(\\S+)` bucket \
                  pointing to `(\\S+)`$")]
 async fn symlink_is_uploaded(
-    _: &mut World,
+    w: &mut World,
     key: String,
     bucket: String,
     original: String,
 ) {
-    put_object(bucket, key, &[], Some(original)).await
+    put_object(bucket, w.unique.filename(key), &[], Some(original)).await
 }
 
-#[then(regex = r"^the file is stored as `(\S+)`$")]
-async fn file_is_stored(_: &mut World, path: String) -> io::Result<()> {
-    let stored = async_fs::read(format!("{DATA_DIR}/{path}")).await?;
+#[then(regex = r"^`(\S+)` is stored as `(\S+)`$")]
+async fn file_is_stored(
+    w: &mut World,
+    sample: String,
+    path: String,
+) -> io::Result<()> {
+    let filename = w.unique.filename(path);
+    let stored = async_fs::read(format!("{DATA_DIR}/{filename}")).await?;
 
-    assert!(sample_file() == stored, "Bytes don't match");
+    assert!(sample_file(sample) == stored, "Bytes don't match");
     Ok(())
 }
 
-#[then(regex = r"^the file is accessible via `(\S+)`$")]
-async fn file_is_accessible(w: &mut World, path: String) -> io::Result<()> {
+#[then(regex = r"^`(\S+)` is accessible via `(\S+)`$")]
+async fn file_is_accessible(
+    w: &mut World,
+    sample: String,
+    path: String,
+) -> io::Result<()> {
     // We are forced to handle symlinks manually, because Dockerized application
     // has different absolute paths.
-    let src = async_fs::read_link(format!("{DATA_DIR}/{path}"))
+    let filename = w.unique.filename(path);
+    let src = async_fs::read_link(format!("{DATA_DIR}/{filename}"))
         .await?
         .display()
         .to_string()
@@ -52,7 +76,7 @@ async fn file_is_accessible(w: &mut World, path: String) -> io::Result<()> {
         .unwrap()
         .trim_matches('/')
         .to_owned();
-    file_is_stored(w, src).await
+    file_is_stored(w, sample, src).await
 }
 
 #[when("trying to upload files with the following keys:")]

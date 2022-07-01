@@ -118,7 +118,12 @@ impl Exec<CreateSymlink> for Storage {
                 .map_err(tracerr::wrap!())?;
         }
 
-        // TODO: Overwrite already existing link, as `CreateFile` does.
+        match async_fs::remove_file(&dest).await {
+            Ok(_) => {}
+            Err(e) if e.kind() == io::ErrorKind::NotFound => {}
+            Err(e) => return Err(tracerr::new!(e)),
+        }
+
         async_fs::unix::symlink(self.absolutize(op.src), dest)
             .await
             .map_err(tracerr::wrap!())
