@@ -75,11 +75,12 @@ async fn clear_data_dir() -> Result<(), String> {
         .await
 }
 
-/// Reads the `samples/` file and memoizes it.
+/// Reads the `samples/` directory, memorizes sample files and returns the
+/// requested sample.
 fn sample_file(name: impl AsRef<str>) -> &'static [u8] {
     let name = name.as_ref();
 
-    static SAMPLE: Lazy<HashMap<String, Vec<u8>>> = Lazy::new(|| {
+    static SAMPLES: Lazy<HashMap<String, Vec<u8>>> = Lazy::new(|| {
         fs::read_dir("samples")
             .expect("Samples directory is missing")
             .map(|e| {
@@ -97,7 +98,7 @@ fn sample_file(name: impl AsRef<str>) -> &'static [u8] {
             .collect()
     });
 
-    SAMPLE
+    SAMPLES
         .get(name)
         .unwrap_or_else(|| panic!("{name} sample doesn't exists"))
 }
@@ -119,7 +120,7 @@ impl Default for Unique {
 }
 
 impl Unique {
-    /// Forms an [`Unique`] filename out of the given `postfix`.
+    /// Forms an [`Unique`] filename out of the given `prefix`.
     #[must_use]
     fn filename(&self, prefix: impl AsRef<str>) -> String {
         format!("{}-{}", prefix.as_ref(), self.0)
