@@ -80,12 +80,25 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
           command:
             - /baza
-            - "-r /files"
+            - "-r /data"
             - {{ printf "-l %s" .Values.conf.logLevel | quote }}
             - {{ printf "-p %d" .Values.conf.port | quote }}
           ports:
             - name: http
               containerPort: {{ .Values.conf.port | int }}
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /data/
+        {{- with .Values.statefulset.resources }}
+          resources: {{- toYaml . | nindent 12 }}
+        {{- end }}
+        - name: nginx
+          image: {{ printf "%s:%s" .Values.nginx.image.repository .Values.nginx.image.tag | quote }}
+          imagePullPolicy: {{ .Values.nginx.image.pullPolicy | quote }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.nginx.port | int }}
               protocol: TCP
           volumeMounts:
             - name: data

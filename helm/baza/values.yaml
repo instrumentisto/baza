@@ -3,6 +3,37 @@ image:
   tag: latest
   pullPolicy: IfNotPresent
 
+nginx:
+  image:
+    repository: docker.io/nginx
+    tag: latest
+    pullPolicy: IfNotPresent
+  port: 80
+  config: |
+      worker_processes  1;
+
+      events {
+        worker_connections  1024;
+      }
+
+      http {
+        include       mime.types;
+        default_type  application/octet-stream;
+        sendfile      on;
+
+        server {
+          listen      80;
+
+          location / {
+            root   /data;
+
+            if ( $request_method !~ ^(GET|HEAD)$ ) {
+              return 405;
+            }
+          }
+        }
+      }
+
 # Additional labels to apply to all Kubernetes resources created by this chart.
 labels: {}
   #app.kubernetes.io/part-of: baza
