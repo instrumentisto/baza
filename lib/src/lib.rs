@@ -4,6 +4,7 @@ use async_fs::File;
 use derive_more::{Display, Error};
 use futures::{pin_mut, AsyncWriteExt as _, Stream, StreamExt as _};
 use tracerr::Traced;
+use uuid::Uuid;
 
 pub use async_trait::async_trait;
 pub use derive_more;
@@ -50,6 +51,14 @@ impl Storage {
     /// Transforms the given [`RelativePath`] into an absolute one.
     fn absolutize(&self, relative: RelativePath) -> PathBuf {
         [self.root.clone(), relative.0].into_iter().collect()
+    }
+
+    /// Creates a new random [`PathBuf`] under the `root` directory for storing
+    /// temporary files.
+    fn generate_temporary_path(&self) -> PathBuf {
+        let mut path = self.root.clone();
+        path.push(format!("tmp-{}", Uuid::new_v4()));
+        path
     }
 }
 
@@ -118,15 +127,35 @@ impl Exec<CreateSymlink> for Storage {
                 .map_err(tracerr::wrap!())?;
         }
 
-        async_fs::remove_file(&dest).await.or_else(|e| {
-            (e.kind() == io::ErrorKind::NotFound)
-                .then_some(())
-                .ok_or_else(|| tracerr::new!(e))
-        })?;
+        // We want symlinks to be overwritten atomically, so it's required to
+        // do it in 2 steps: first create temporary symlink file and then
+        // replace the original file with the temporary one.
 
-        async_fs::unix::symlink(self.absolutize(op.src), dest)
+        // We could try to do it only when the symlink already exists, but we
+        // don't have atomicity between reads and writes out the box as well.
+        // So it's easier to just do the two step variant all the time.
+
+        let tmp = self.generate_temporary_path();
+        async_fs::unix::symlink(self.absolutize(op.src), &tmp)
             .await
-            .map_err(tracerr::wrap!())
+            .map_err(tracerr::wrap!())?;
+
+        match async_fs::rename(&tmp, dest).await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                // Try to remove the temporary file as best effort. It's also
+                // possible to leave a dangling tmp file in case of an abrupt
+                // shutdown.
+                if let Err(e) = async_fs::remove_file(&tmp).await {
+                    tracing::warn!(
+                        "Failed to remove temporary file (Path: {:?}): {}",
+                        tmp,
+                        e
+                    );
+                }
+                Err(tracerr::new!(e))
+            }
+        }
     }
 }
 
