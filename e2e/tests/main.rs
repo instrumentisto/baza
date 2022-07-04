@@ -19,7 +19,7 @@ const DATA_DIR: &str = "../.cache/data";
 
 #[derive(Debug, Default, WorldInit)]
 struct World {
-    /// Random string of the concrete scenario run to enrich its data with for
+    /// Random string of the concrete scenario run, to enrich its data with, for
     /// avoiding possible collisions with other running scenarios.
     unique: Unique,
 
@@ -75,11 +75,9 @@ async fn clear_data_dir() -> Result<(), String> {
         .await
 }
 
-/// Reads the `samples/` directory, memorizes sample files and returns the
-/// requested sample.
-fn sample_file(name: impl AsRef<str>) -> &'static [u8] {
-    let name = name.as_ref();
-
+/// Reads the `samples/` directory, memoizes sample files, and returns the
+/// requested `sample`.
+fn sample_file(sample: impl AsRef<str>) -> &'static [u8] {
     static SAMPLES: Lazy<HashMap<String, Vec<u8>>> = Lazy::new(|| {
         fs::read_dir("samples")
             .expect("Samples directory is missing")
@@ -98,12 +96,13 @@ fn sample_file(name: impl AsRef<str>) -> &'static [u8] {
             .collect()
     });
 
+    let sample = sample.as_ref();
     SAMPLES
-        .get(name)
-        .unwrap_or_else(|| panic!("{name} sample doesn't exists"))
+        .get(sample)
+        .unwrap_or_else(|| panic!("sample `{sample}` doesn't exist"))
 }
 
-/// Random string to enrich E2E scenario data with for avoiding collisions.
+/// Random string to enrich E2E scenario data with, for avoiding collisions.
 #[derive(Clone, Debug)]
 struct Unique(String);
 
@@ -120,7 +119,7 @@ impl Default for Unique {
 }
 
 impl Unique {
-    /// Forms an [`Unique`] filename out of the given `prefix`.
+    /// Forms an [`Unique`] filename out with the provided `prefix`.
     #[must_use]
     fn filename(&self, prefix: impl AsRef<str>) -> String {
         format!("{}-{}", prefix.as_ref(), self.0)

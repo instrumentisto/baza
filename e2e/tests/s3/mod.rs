@@ -15,7 +15,7 @@ use super::{sample_file, World, DATA_DIR};
 /// URL of S3 HTTP API to run E2E tests against.
 const API_URL: &str = "http://localhost:9294";
 
-#[given(regex = r"^`(\S+)` is uploaded to `(\S+)` bucket as `(\S+)`$")]
+#[given(regex = r"^`(\S+)` was uploaded to `(\S+)` bucket as `(\S+)`$")]
 #[when(regex = r"^`(\S+)` is uploaded to `(\S+)` bucket as `(\S+)`$")]
 async fn file_uploaded(
     w: &mut World,
@@ -32,8 +32,8 @@ async fn file_uploaded(
     .await
 }
 
-#[given(regex = "^`(\\S+)` symlink is created on `(\\S+)` bucket \
-                 pointing to `(\\S+)`$")]
+#[given(regex = "^`(\\S+)` symlink was created on `(\\S+)` bucket \
+                  pointing to `(\\S+)`$")]
 #[when(regex = "^`(\\S+)` symlink is created on `(\\S+)` bucket \
                  pointing to `(\\S+)`$")]
 async fn symlink_is_uploaded(

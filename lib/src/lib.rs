@@ -118,11 +118,11 @@ impl Exec<CreateSymlink> for Storage {
                 .map_err(tracerr::wrap!())?;
         }
 
-        match async_fs::remove_file(&dest).await {
-            Ok(_) => {}
-            Err(e) if e.kind() == io::ErrorKind::NotFound => {}
-            Err(e) => return Err(tracerr::new!(e)),
-        }
+        async_fs::remove_file(&dest).await.or_else(|e| {
+            (e.kind() == io::ErrorKind::NotFound)
+                .then_some(())
+                .ok_or_else(|| tracerr::new!(e))
+        })?;
 
         async_fs::unix::symlink(self.absolutize(op.src), dest)
             .await
