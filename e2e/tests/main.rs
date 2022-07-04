@@ -57,7 +57,7 @@ async fn clear_data_dir() -> Result<(), String> {
         .await
         .map_err(|e| format!("Cannot stat `{DATA_DIR}` dir: {e}"))?
         .is_dir()
-        .then(|| ())
+        .then_some(())
         .ok_or_else(|| format!("`{DATA_DIR}` is not a dir"))?;
 
     // We cannot use `async_fs::remove_dir_all` on `DATA_DIR` directly, because
