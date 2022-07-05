@@ -84,14 +84,14 @@ ifeq ($(dockerized),yes)
 ifeq ($(rebuild),yes)
 	@make docker.image tag=$(tag) debug=$(debug) no-cache=$(no-cache)
 endif
-	@mkdir -p .cache/data/
+	@mkdir -p .cache/baza-root/
 	docker run --rm $(if $(call eq,$(background),yes),-d,-it) --name $(NAME) \
 	           -u $(shell id -u) \
 	           -p 9294:9294 \
-	           -v "$(PWD)/.cache/data":/.cache/data:z \
-		$(OWNER)/$(NAME):$(or $(tag),dev) -r .cache/data
+	           -v "$(PWD)/.cache/baza-root":/.cache/baza-root:z \
+		$(OWNER)/$(NAME):$(or $(tag),dev) -r .cache/baza-root
 else
-	cargo run $(if $(call eq,$(debug),no),--release,) -- -r .cache/data \
+	cargo run $(if $(call eq,$(debug),no),--release,) -- -r .cache/baza-root \
 		$(if $(call eq,$(background),yes),&,)
 endif
 

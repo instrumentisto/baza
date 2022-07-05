@@ -1,4 +1,7 @@
-use std::{fmt, io, path::PathBuf};
+use std::{
+    fmt, io,
+    path::{Path, PathBuf},
+};
 
 use async_fs::File;
 use derive_more::{Display, Error};
@@ -31,6 +34,12 @@ pub struct Storage {
 }
 
 impl Storage {
+    /// Directory to store persistent data.
+    const DATA_DIR: &'static str = "data";
+
+    /// Directory to store temporary files.
+    const TMP_DIR: &'static str = "tmp";
+
     /// Creates a new [`Storage`].
     ///
     /// If the provided `root` directory doesn't exist yet, tries to create it
@@ -40,25 +49,54 @@ impl Storage {
     ///
     /// - If the provided `root` is an invalid path.
     /// - If the provided `root` is not a directory.
-    pub async fn new(root: impl Into<PathBuf>) -> Result<Self, io::Error> {
-        let path = root.into();
-        async_fs::create_dir_all(&path).await?;
+    pub async fn new(
+        root: impl Into<PathBuf>,
+    ) -> Result<Self, Traced<io::Error>> {
+        let root = root.into();
+
+        let data = (&root, Self::DATA_DIR).into_path_buf();
+        async_fs::create_dir_all(data)
+            .await
+            .map_err(tracerr::wrap!())?;
+
+        // Clear tmp directory.
+        let tmp = (&root, Self::TMP_DIR).into_path_buf();
+        remove_existing_dir(&tmp).await.map_err(tracerr::wrap!())?;
+        async_fs::create_dir_all(tmp)
+            .await
+            .map_err(tracerr::wrap!())?;
+
         Ok(Storage {
-            root: async_fs::canonicalize(path).await?,
+            root: async_fs::canonicalize(root)
+                .await
+                .map_err(tracerr::wrap!())?,
         })
     }
 
-    /// Transforms the given [`RelativePath`] into an absolute one.
-    fn absolutize(&self, relative: RelativePath) -> PathBuf {
-        [self.root.clone(), relative.0].into_iter().collect()
+    /// Transforms the given [`RelativePath`] into an absolute one under the
+    /// [`Storage::DATA_DIR`].
+    fn absolutize_data_path(&self, relative: RelativePath) -> PathBuf {
+        (&self.root, Self::DATA_DIR, relative.0).into_path_buf()
     }
 
-    /// Creates a new random [`PathBuf`] under the `root` directory for storing
-    /// temporary files.
-    fn generate_temporary_path(&self) -> PathBuf {
-        let mut path = self.root.clone();
-        path.push(format!("tmp-{}", Uuid::new_v4()));
-        path
+    /// Generates a new random [`PathBuf`] inside [`Storage::TMP_DIR`].
+    fn generate_tmp_path(&self) -> PathBuf {
+        (&self.root, Self::TMP_DIR, Uuid::new_v4().to_string()).into_path_buf()
+    }
+}
+
+/// Removes existing directory.
+/// Succeeds if directory does not exist already.
+///
+/// # Errors
+///
+/// - If [`async_fs::remove_dir_all`] errors with any [`io::ErrorKind`] other
+///   than [`io::ErrorKind::NotFound`].
+async fn remove_existing_dir(path: impl AsRef<Path>) -> Result<(), io::Error> {
+    match async_fs::remove_dir_all(path).await {
+        Ok(_) => Ok(()),
+        Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(()),
+        Err(e) => Err(e),
     }
 }
 
@@ -83,7 +121,7 @@ where
 
     #[tracing::instrument(level = "debug", err(Debug))]
     async fn exec(&self, op: CreateFile<S>) -> Result<Self::Ok, Self::Err> {
-        let path = self.absolutize(op.path);
+        let path = self.absolutize_data_path(op.path);
         if let Some(dir) = path.parent() {
             async_fs::create_dir_all(dir)
                 .await
@@ -120,42 +158,59 @@ impl Exec<CreateSymlink> for Storage {
 
     #[tracing::instrument(level = "debug", err(Debug))]
     async fn exec(&self, op: CreateSymlink) -> Result<Self::Ok, Self::Err> {
-        let dest = self.absolutize(op.dest);
+        let dest = self.absolutize_data_path(op.dest);
         if let Some(dir) = dest.parent() {
             async_fs::create_dir_all(dir)
                 .await
                 .map_err(tracerr::wrap!())?;
+        }
+        let src = self.absolutize_data_path(op.src);
+
+        match async_fs::unix::symlink(&src, &dest).await {
+            Ok(_) => return Ok(()),
+            Err(e) if e.kind() == io::ErrorKind::AlreadyExists => {}
+            Err(e) => return Err(tracerr::new!(e)),
         }
 
         // We want symlinks to be overwritten atomically, so it's required to
         // do it in 2 steps: first create temporary symlink file and then
         // replace the original file with the temporary one.
 
-        // We could try to do it only when the symlink already exists, but we
-        // don't have atomicity between reads and writes out the box as well.
-        // So it's easier to just do the two step variant all the time.
-
-        let tmp = self.generate_temporary_path();
-        async_fs::unix::symlink(self.absolutize(op.src), &tmp)
+        let tmp = self.generate_tmp_path();
+        async_fs::unix::symlink(src, &tmp)
             .await
             .map_err(tracerr::wrap!())?;
 
-        match async_fs::rename(&tmp, dest).await {
-            Ok(_) => Ok(()),
-            Err(e) => {
-                // Try to remove the temporary file as best effort. It's also
-                // possible to leave a dangling tmp file in case of an abrupt
-                // shutdown.
-                if let Err(e) = async_fs::remove_file(&tmp).await {
-                    tracing::warn!(
-                        "Failed to remove temporary file (Path: {:?}): {}",
-                        tmp,
-                        e
-                    );
-                }
-                Err(tracerr::new!(e))
-            }
-        }
+        async_fs::rename(&tmp, dest).await.map_err(tracerr::wrap!())
+    }
+}
+
+/// Conversion into [`PathBuf`].
+trait IntoPathBuf {
+    /// Converts `Self` into [`PathBuf`].
+    fn into_path_buf(self) -> PathBuf;
+}
+
+impl<A, B> IntoPathBuf for (A, B)
+where
+    A: AsRef<Path>,
+    B: AsRef<Path>,
+{
+    fn into_path_buf(self) -> PathBuf {
+        [self.0.as_ref(), self.1.as_ref()].into_iter().collect()
+    }
+}
+
+impl<A, B, C> IntoPathBuf for (A, B, C)
+where
+    A: AsRef<Path>,
+    B: AsRef<Path>,
+    C: AsRef<Path>,
+{
+    fn into_path_buf(self) -> PathBuf {
+        [self.0.as_ref(), self.1.as_ref(), self.2.as_ref()]
+            .into_iter()
+            .collect()
     }
 }
 
