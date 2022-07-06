@@ -27,19 +27,21 @@ pub trait Exec<Operation> {
 /// Storage backed by files and directories.
 #[derive(Clone, Debug)]
 pub struct Storage {
-    /// [`Path`] to root directory for storing files.
+    /// Absolute [`Path`] to the directory to persist data in.
+    data_dir: PathBuf,
+
+    /// Absolute [`Path`] to the directory to use for storing temporary data.
     ///
-    /// [`Path`]: std::path::Path
-    root: PathBuf,
+    /// [System's temporary directory][0] is not used, because it may be located
+    /// on another device or has another filesystem, thus doesn't guarantee
+    /// atomicity of [copy](async_fs::copy) and [rename](async_fs::rename)
+    /// operations, which is vital for how this directory is used.
+    ///
+    /// [0]: https://en.wikipedia.org/wiki/Temporary_folder
+    tmp_dir: PathBuf,
 }
 
 impl Storage {
-    /// Directory to store persistent data.
-    const DATA_DIR: &'static str = "data";
-
-    /// Directory to store temporary files.
-    const TMP_DIR: &'static str = "tmp";
-
     /// Creates a new [`Storage`].
     ///
     /// If the provided `root` directory doesn't exist yet, tries to create it
@@ -54,50 +56,42 @@ impl Storage {
     ) -> Result<Self, Traced<io::Error>> {
         let root = root.into();
 
-        let data = (&root, Self::DATA_DIR).into_path_buf();
-        async_fs::create_dir_all(data)
+        let data = root.join("data");
+        async_fs::create_dir_all(&data)
             .await
             .map_err(tracerr::wrap!())?;
 
-        // Clear tmp directory.
-        let tmp = (&root, Self::TMP_DIR).into_path_buf();
+        let tmp = root.join("tmp");
         remove_existing_dir(&tmp).await.map_err(tracerr::wrap!())?;
-        async_fs::create_dir_all(tmp)
+        async_fs::create_dir_all(&tmp)
             .await
             .map_err(tracerr::wrap!())?;
 
-        Ok(Storage {
-            root: async_fs::canonicalize(root)
+        Ok(Self {
+            data_dir: async_fs::canonicalize(data)
+                .await
+                .map_err(tracerr::wrap!())?,
+            tmp_dir: async_fs::canonicalize(tmp)
                 .await
                 .map_err(tracerr::wrap!())?,
         })
     }
-
-    /// Transforms the given [`RelativePath`] into an absolute one under the
-    /// [`Storage::DATA_DIR`].
-    fn absolutize_data_path(&self, relative: RelativePath) -> PathBuf {
-        (&self.root, Self::DATA_DIR, relative.0).into_path_buf()
-    }
-
-    /// Generates a new random [`PathBuf`] inside [`Storage::TMP_DIR`].
-    fn generate_tmp_path(&self) -> PathBuf {
-        (&self.root, Self::TMP_DIR, Uuid::new_v4().to_string()).into_path_buf()
-    }
 }
 
-/// Removes existing directory.
-/// Succeeds if directory does not exist already.
+/// Removes the existing `dir`ectory.
+///
+/// # Idempotent
+///
+/// Succeeds if the `dir`ectory doesn't exist already.
 ///
 /// # Errors
 ///
-/// - If [`async_fs::remove_dir_all`] errors with any [`io::ErrorKind`] other
-///   than [`io::ErrorKind::NotFound`].
-async fn remove_existing_dir(path: impl AsRef<Path>) -> Result<(), io::Error> {
-    match async_fs::remove_dir_all(path).await {
-        Ok(_) => Ok(()),
-        Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(()),
-        Err(e) => Err(e),
-    }
+/// If [`async_fs::remove_dir_all()`] errors with anything other than
+/// [`io::ErrorKind::NotFound`].
+async fn remove_existing_dir(dir: impl AsRef<Path>) -> io::Result<()> {
+    async_fs::remove_dir_all(dir).await.or_else(|e| {
+        (e.kind() == io::ErrorKind::NotFound).then_some(()).ok_or(e)
+    })
 }
 
 /// Operation of a new file creation.
@@ -121,7 +115,7 @@ where
 
     #[tracing::instrument(level = "debug", err(Debug))]
     async fn exec(&self, op: CreateFile<S>) -> Result<Self::Ok, Self::Err> {
-        let path = self.absolutize_data_path(op.path);
+        let path = self.data_dir.join(op.path);
         if let Some(dir) = path.parent() {
             async_fs::create_dir_all(dir)
                 .await
@@ -158,13 +152,13 @@ impl Exec<CreateSymlink> for Storage {
 
     #[tracing::instrument(level = "debug", err(Debug))]
     async fn exec(&self, op: CreateSymlink) -> Result<Self::Ok, Self::Err> {
-        let dest = self.absolutize_data_path(op.dest);
+        let dest = self.data_dir.join(op.dest);
         if let Some(dir) = dest.parent() {
             async_fs::create_dir_all(dir)
                 .await
                 .map_err(tracerr::wrap!())?;
         }
-        let src = self.absolutize_data_path(op.src);
+        let src = self.data_dir.join(op.src);
 
         match async_fs::unix::symlink(&src, &dest).await {
             Ok(_) => return Ok(()),
@@ -173,44 +167,14 @@ impl Exec<CreateSymlink> for Storage {
         }
 
         // We want symlinks to be overwritten atomically, so it's required to
-        // do it in 2 steps: first create temporary symlink file and then
-        // replace the original file with the temporary one.
-
-        let tmp = self.generate_tmp_path();
+        // do this in 2 steps:
+        // 1. create temporary symlink file;
+        // 2. replace the original file with the temporary one.
+        let tmp = self.tmp_dir.join(Uuid::new_v4().to_string());
         async_fs::unix::symlink(src, &tmp)
             .await
             .map_err(tracerr::wrap!())?;
-
         async_fs::rename(&tmp, dest).await.map_err(tracerr::wrap!())
-    }
-}
-
-/// Conversion into [`PathBuf`].
-trait IntoPathBuf {
-    /// Converts `Self` into [`PathBuf`].
-    fn into_path_buf(self) -> PathBuf;
-}
-
-impl<A, B> IntoPathBuf for (A, B)
-where
-    A: AsRef<Path>,
-    B: AsRef<Path>,
-{
-    fn into_path_buf(self) -> PathBuf {
-        [self.0.as_ref(), self.1.as_ref()].into_iter().collect()
-    }
-}
-
-impl<A, B, C> IntoPathBuf for (A, B, C)
-where
-    A: AsRef<Path>,
-    B: AsRef<Path>,
-    C: AsRef<Path>,
-{
-    fn into_path_buf(self) -> PathBuf {
-        [self.0.as_ref(), self.1.as_ref(), self.2.as_ref()]
-            .into_iter()
-            .collect()
     }
 }
 
@@ -232,6 +196,12 @@ impl RelativePath {
     pub fn join(mut self, other: RelativePath) -> Self {
         self.0.push(other.0);
         self
+    }
+}
+
+impl AsRef<Path> for RelativePath {
+    fn as_ref(&self) -> &Path {
+        self.0.as_path()
     }
 }
 

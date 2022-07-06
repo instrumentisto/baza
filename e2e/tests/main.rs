@@ -15,7 +15,7 @@ use rand::{distributions::Alphanumeric, thread_rng, Rng as _};
 use baza::{async_trait, futures::TryStreamExt as _};
 
 /// Path to the directory where files are stored during E2E tests running.
-const DATA_DIR: &str = "../.cache/baza-root/data";
+const DATA_DIR: &str = "../.cache/baza/data";
 
 #[derive(Debug, Default, WorldInit)]
 struct World {

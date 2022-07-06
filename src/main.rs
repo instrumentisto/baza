@@ -24,7 +24,7 @@ async fn main() -> Result<(), String> {
 #[derive(Debug, clap::Parser)]
 struct CliOpts {
     /// Directory where all buckets will be stored.
-    #[clap(short, long, parse(from_os_str), default_value = ".")]
+    #[clap(short, long, parse(from_os_str), default_value = "/var/lib/baza")]
     root: PathBuf,
 
     /// Logging verbosity level.
