@@ -11,9 +11,9 @@ async fn main() -> Result<(), String> {
         .with_max_level(args.log_level)
         .init();
 
-    let storage = Storage::new(args.root)
-        .await
-        .map_err(|e| format!("Failed to initialize `Storage`: {e}"))?;
+    let storage = Storage::new(args.root).await.map_err(|e| {
+        format!("Failed to initialize `Storage`: {e}: {}", e.trace())
+    })?;
 
     s3::run_http_server(storage, ("0.0.0.0", args.port))
         .await
@@ -24,7 +24,7 @@ async fn main() -> Result<(), String> {
 #[derive(Debug, clap::Parser)]
 struct CliOpts {
     /// Directory where all buckets will be stored.
-    #[clap(short, long, parse(from_os_str), default_value = "data")]
+    #[clap(short, long, parse(from_os_str), default_value = "/var/lib/baza")]
     root: PathBuf,
 
     /// Logging verbosity level.

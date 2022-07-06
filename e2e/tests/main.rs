@@ -2,18 +2,27 @@
 
 mod s3;
 
-use std::{collections::HashSet, convert::Infallible, fs};
+use std::{
+    collections::{HashMap, HashSet},
+    convert::Infallible,
+    fs,
+};
 
 use cucumber::WorldInit;
 use once_cell::sync::Lazy;
+use rand::{distributions::Alphanumeric, thread_rng, Rng as _};
 
 use baza::{async_trait, futures::TryStreamExt as _};
 
 /// Path to the directory where files are stored during E2E tests running.
-const DATA_DIR: &str = "../.cache/data";
+const DATA_DIR: &str = "../.cache/baza/data";
 
 #[derive(Debug, Default, WorldInit)]
 struct World {
+    /// Random string of the concrete scenario run, to enrich its data with, for
+    /// avoiding possible collisions with other running scenarios.
+    unique: Unique,
+
     /// S3 object keys to check for validity.
     keys_to_check: HashSet<String>,
 }
@@ -48,7 +57,7 @@ async fn clear_data_dir() -> Result<(), String> {
         .await
         .map_err(|e| format!("Cannot stat `{DATA_DIR}` dir: {e}"))?
         .is_dir()
-        .then(|| ())
+        .then_some(())
         .ok_or_else(|| format!("`{DATA_DIR}` is not a dir"))?;
 
     // We cannot use `async_fs::remove_dir_all` on `DATA_DIR` directly, because
@@ -66,11 +75,53 @@ async fn clear_data_dir() -> Result<(), String> {
         .await
 }
 
-/// Reads the `samples/` file and memoizes it.
-fn sample_file() -> &'static [u8] {
-    static SAMPLE: Lazy<Vec<u8>> = Lazy::new(|| {
-        fs::read("samples/rms.jpg").expect("Sample file is missing")
+/// Reads the `samples/` directory, memoizes sample files, and returns the
+/// requested `sample`.
+fn sample_file(sample: impl AsRef<str>) -> &'static [u8] {
+    static SAMPLES: Lazy<HashMap<String, Vec<u8>>> = Lazy::new(|| {
+        fs::read_dir("samples")
+            .expect("Samples directory is missing")
+            .map(|e| {
+                let name = e
+                    .expect("Failed to read sample directory entry")
+                    .file_name()
+                    .into_string()
+                    .expect("Sample filename is not a valid String");
+
+                let content = fs::read(format!("samples/{}", name))
+                    .expect("Failed to read a sample file");
+
+                (name, content)
+            })
+            .collect()
     });
 
-    &*SAMPLE
+    let sample = sample.as_ref();
+    SAMPLES
+        .get(sample)
+        .unwrap_or_else(|| panic!("sample `{sample}` doesn't exist"))
+}
+
+/// Random string to enrich E2E scenario data with, for avoiding collisions.
+#[derive(Clone, Debug)]
+struct Unique(String);
+
+impl Default for Unique {
+    fn default() -> Self {
+        Self(
+            thread_rng()
+                .sample_iter(&Alphanumeric)
+                .take(10)
+                .map(|n| char::from(n).to_ascii_lowercase())
+                .collect(),
+        )
+    }
+}
+
+impl Unique {
+    /// Forms an [`Unique`] filename out with the provided `prefix`.
+    #[must_use]
+    fn filename(&self, prefix: impl AsRef<str>) -> String {
+        format!("{}-{}", prefix.as_ref(), self.0)
+    }
 }
