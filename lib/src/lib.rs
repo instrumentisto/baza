@@ -1,9 +1,13 @@
-use std::{fmt, io, path::PathBuf};
+use std::{
+    fmt, io,
+    path::{Path, PathBuf},
+};
 
 use async_fs::File;
 use derive_more::{Display, Error};
 use futures::{pin_mut, AsyncWriteExt as _, Stream, StreamExt as _};
 use tracerr::Traced;
+use uuid::Uuid;
 
 pub use async_trait::async_trait;
 pub use derive_more;
@@ -23,10 +27,18 @@ pub trait Exec<Operation> {
 /// Storage backed by files and directories.
 #[derive(Clone, Debug)]
 pub struct Storage {
-    /// [`Path`] to root directory for storing files.
+    /// Absolute [`Path`] to the directory to persist data in.
+    data_dir: PathBuf,
+
+    /// Absolute [`Path`] to the directory to use for storing temporary data.
     ///
-    /// [`Path`]: std::path::Path
-    root: PathBuf,
+    /// [System's temporary directory][0] is not used, because it may be located
+    /// on another device or has another filesystem, thus doesn't guarantee
+    /// atomicity of [copy](async_fs::copy) and [rename](async_fs::rename)
+    /// operations, which is vital for how this directory is used.
+    ///
+    /// [0]: https://en.wikipedia.org/wiki/Temporary_folder
+    tmp_dir: PathBuf,
 }
 
 impl Storage {
@@ -39,18 +51,47 @@ impl Storage {
     ///
     /// - If the provided `root` is an invalid path.
     /// - If the provided `root` is not a directory.
-    pub async fn new(root: impl Into<PathBuf>) -> Result<Self, io::Error> {
-        let path = root.into();
-        async_fs::create_dir_all(&path).await?;
-        Ok(Storage {
-            root: async_fs::canonicalize(path).await?,
+    pub async fn new(
+        root: impl Into<PathBuf>,
+    ) -> Result<Self, Traced<io::Error>> {
+        let root = root.into();
+
+        let data = root.join("data");
+        async_fs::create_dir_all(&data)
+            .await
+            .map_err(tracerr::wrap!())?;
+
+        let tmp = root.join("tmp");
+        remove_existing_dir(&tmp).await.map_err(tracerr::wrap!())?;
+        async_fs::create_dir_all(&tmp)
+            .await
+            .map_err(tracerr::wrap!())?;
+
+        Ok(Self {
+            data_dir: async_fs::canonicalize(data)
+                .await
+                .map_err(tracerr::wrap!())?,
+            tmp_dir: async_fs::canonicalize(tmp)
+                .await
+                .map_err(tracerr::wrap!())?,
         })
     }
+}
 
-    /// Transforms the given [`RelativePath`] into an absolute one.
-    fn absolutize(&self, relative: RelativePath) -> PathBuf {
-        [self.root.clone(), relative.0].into_iter().collect()
-    }
+/// Removes the existing `dir`ectory.
+///
+/// # Idempotent
+///
+/// Succeeds if the `dir`ectory doesn't exist already.
+///
+/// # Errors
+///
+/// If [`async_fs::remove_dir_all()`] errors with anything other than
+/// [`io::ErrorKind::NotFound`].
+async fn remove_existing_dir(dir: impl AsRef<Path>) -> io::Result<()> {
+    async_fs::remove_dir_all(dir).await.or_else(|e| {
+        (e.kind() == io::ErrorKind::NotFound).then_some(()).ok_or(e)
+    })
 }
 
 /// Operation of a new file creation.
@@ -74,7 +115,7 @@ where
 
     #[tracing::instrument(level = "debug", err(Debug))]
     async fn exec(&self, op: CreateFile<S>) -> Result<Self::Ok, Self::Err> {
-        let path = self.absolutize(op.path);
+        let path = self.data_dir.join(op.path);
         if let Some(dir) = path.parent() {
             async_fs::create_dir_all(dir)
                 .await
@@ -111,17 +152,29 @@ impl Exec<CreateSymlink> for Storage {
 
     #[tracing::instrument(level = "debug", err(Debug))]
     async fn exec(&self, op: CreateSymlink) -> Result<Self::Ok, Self::Err> {
-        let dest = self.absolutize(op.dest);
+        let dest = self.data_dir.join(op.dest);
         if let Some(dir) = dest.parent() {
             async_fs::create_dir_all(dir)
                 .await
                 .map_err(tracerr::wrap!())?;
         }
+        let src = self.data_dir.join(op.src);
 
-        // TODO: Overwrite already existing link, as `CreateFile` does.
-        async_fs::unix::symlink(self.absolutize(op.src), dest)
+        match async_fs::unix::symlink(&src, &dest).await {
+            Ok(_) => return Ok(()),
+            Err(e) if e.kind() == io::ErrorKind::AlreadyExists => {}
+            Err(e) => return Err(tracerr::new!(e)),
+        }
+
+        // We want symlinks to be overwritten atomically, so it's required to
+        // do this in 2 steps:
+        // 1. create temporary symlink file;
+        // 2. replace the original file with the temporary one.
+        let tmp = self.tmp_dir.join(Uuid::new_v4().to_string());
+        async_fs::unix::symlink(src, &tmp)
             .await
-            .map_err(tracerr::wrap!())
+            .map_err(tracerr::wrap!())?;
+        async_fs::rename(&tmp, dest).await.map_err(tracerr::wrap!())
     }
 }
 
@@ -143,6 +196,12 @@ impl RelativePath {
     pub fn join(mut self, other: RelativePath) -> Self {
         self.0.push(other.0);
         self
+    }
+}
+
+impl AsRef<Path> for RelativePath {
+    fn as_ref(&self) -> &Path {
+        self.0.as_path()
     }
 }
 
