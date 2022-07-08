@@ -1,0 +1,29 @@
+{{- if .Values.data.persistentVolume.enabled }}
+{{- if not .Values.data.persistentVolume.existingClaim }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ include "baza.fullname" . | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    helm.sh/chart: {{ include "baza.chart" . | quote }}
+    app.kubernetes.io/name: {{ include "baza.name" . | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+{{- with .Values.data.persistentVolume.annotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+{{- end }}
+spec:
+  accessModes: {{- toYaml .Values.data.persistentVolume.accessModes | nindent 4 }}
+{{- if .Values.data.persistentVolume.storageClass }}
+{{- if (eq "-" .Values.data.persistentVolume.storageClass) }}
+  storageClassName: ""
+{{- else }}
+  storageClassName: {{ .Values.data.persistentVolume.storageClass | quote }}
+{{- end }}
+{{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.data.persistentVolume.size | quote }}
+{{- end }}
+{{- end }}

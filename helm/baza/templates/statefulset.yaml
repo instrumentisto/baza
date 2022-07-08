@@ -1,0 +1,158 @@
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: {{ include "baza.fullname" . | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    helm.sh/chart: {{ include "baza.chart" . | quote }}
+    app.kubernetes.io/name: {{ include "baza.name" . | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+  {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  serviceName: {{ include "baza.fullname" . | quote }}
+  replicas: {{ .Values.statefulset.replicas | int }}
+  revisionHistoryLimit: {{ .Values.statefulset.revisionHistoryLimit | int }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "baza.name" . | quote }}
+      app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "baza.name" . | quote }}
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+      {{- with .Values.labels }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      annotations:
+        kubectl.kubernetes.io/default-container: baza
+      {{- if .Values.nginx.enabled }}
+        checksum/nginx.conf: {{ pick (include (print $.Template.BasePath "/configmap.nginx.yaml") . | fromYaml) "data" | toYaml | sha256sum | quote }}
+      {{- end }}
+      {{- with .Values.statefulset.revision }}
+        revision: {{ . | quote }}
+      {{- end }}
+      {{- with .Values.statefulset.annotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+    {{- if or .Values.statefulset.nodeAffinity .Values.statefulset.podAffinity .Values.statefulset.podAntiAffinity }}
+      affinity:
+      {{- with .Values.statefulset.nodeAffinity }}
+        nodeAffinity: {{- toYaml . | nindent 10 }}
+      {{- end }}
+      {{- with .Values.statefulset.podAffinity }}
+        podAffinity: {{- toYaml . | nindent 10 }}
+      {{- end }}
+      {{- if .Values.statefulset.podAntiAffinity }}
+        podAntiAffinity:
+        {{- if .Values.statefulset.podAntiAffinity.type }}
+        {{- if eq .Values.statefulset.podAntiAffinity.type "hard" }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: {{ .Values.statefulset.podAntiAffinity.topologyKey | quote }}
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: {{ include "baza.name" . | quote }}
+                  app.kubernetes.io/instance: {{ .Release.Name | quote }}
+                  app.kubernetes.io/component: api
+        {{- else if eq .Values.statefulset.podAntiAffinity.type "soft" }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: {{ .Values.statefulset.podAntiAffinity.weight | int64 }}
+              podAffinityTerm:
+                topologyKey: {{ .Values.statefulset.podAntiAffinity.topologyKey | quote }}
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: {{ include "baza.name" . | quote }}
+                    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+                    app.kubernetes.io/component: api
+        {{- end }}
+        {{- else }}
+          {{- toYaml .Values.statefulset.podAntiAffinity | nindent 10 }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- with .Values.statefulset.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+    {{- end }}
+      containers:
+        - name: baza
+          image: {{ printf "%s:%s" .Values.image.repository .Values.image.tag | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          args: [
+            "-r", "/var/lib/baza",
+            "-l", {{ .Values.conf.log.level | quote }},
+            "-p", {{ .Values.conf.port | int | quote }},
+          ]
+          ports:
+            - name: s3
+              containerPort: {{ .Values.conf.port | int }}
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/baza/
+        {{- with .Values.statefulset.resources }}
+          resources: {{- toYaml . | nindent 12 }}
+        {{- end }}
+      {{- if .Values.nginx.enabled }}
+        - name: nginx
+          image: {{ printf "%s:%s" .Values.nginx.image.repository .Values.nginx.image.tag | quote }}
+          imagePullPolicy: {{ .Values.nginx.image.pullPolicy | quote }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.nginx.port | int }}
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/baza/
+              readOnly: true
+          {{- if .Values.nginx.conf }}
+            - name: nginx-conf
+              subPath: nginx.conf
+              mountPath: /etc/nginx/nginx.conf
+              readOnly: true
+          {{- end }}
+          {{- if index .Values.nginx "conf.d" }}
+          {{- range $file := slice (keys (index .Values.nginx "conf.d") | sortAlpha) }}
+          {{- if index $.Values.nginx "conf.d" $file }}
+            - name: nginx-conf
+              subPath: {{ printf "conf.d__%s" $file | quote }}
+              mountPath: {{ printf "/etc/nginx/conf.d/%s" $file | quote }}
+              readOnly: true
+          {{- end }}
+          {{- end }}
+          {{- end }}
+            - name: nginx-cache
+              subPath: cache/
+              mountPath: /var/cache/nginx/
+            - name: nginx-cache
+              subPath: run/
+              mountPath: /var/run/
+        {{- with .Values.nginx.resources }}
+          resources: {{- toYaml . | nindent 12 }}
+        {{- end }}
+      {{- end }}
+      volumes:
+        - name: data
+        {{- if .Values.data.persistentVolume.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ if .Values.data.persistentVolume.existingClaim -}}
+                         {{ .Values.data.persistentVolume.existingClaim | quote }}
+                       {{- else -}}
+                         {{ include "baza.fullname" . | quote }}
+                       {{- end }}
+        {{- else if .Values.data.hostPath }}
+          hostPath:
+            path: {{ .Values.data.hostPath | quote }}
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+      {{- if .Values.nginx.enabled }}
+        - name: nginx-conf
+          configMap:
+            name: {{ printf "%s.nginx.conf" (include "baza.fullname" .) | quote }}
+        - name: nginx-cache
+          emptyDir: {}
+      {{- end }}

@@ -31,6 +31,7 @@ jobs:
     needs:
       - clippy
       - docker
+      - helm-lint
       - rustdoc
       - rustfmt
       - test-e2e
@@ -60,6 +61,15 @@ jobs:
         if: ${{ env.CACHE == 'true' }}
 
       - run: make cargo.lint
+
+  helm-lint:
+    name: Lint Helm chart
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: azure/setup-helm@v3
+
+      - run: make helm.lint
 
   rustfmt:
     runs-on: ubuntu-latest

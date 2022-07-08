@@ -1,0 +1,15 @@
+Baza can be accessed via these URLs inside your cluster:
+{{- if $.Values.nginx.enabled }}
+  Nginx:  http://{{ include "baza.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.nginx.port | int }}/
+{{- end }}
+  S3 API: http://{{ include "baza.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.conf.port | int }}/
+
+{{- if .Values.ingress.enabled }}{{ "\n" }}
+Baza can be accessed via these URLs outside your cluster:
+{{- range .Values.ingress.hosts }}
+{{- if $.Values.nginx.enabled }}
+  Nginx:  http{{ if $.Values.ingress.tls.enabled }}s{{ end }}://{{ . }}{{ $.Values.ingress.subPath | trimSuffix "/" }}/
+{{- end }}
+  S3 API: http{{ if $.Values.ingress.tls.enabled }}s{{ end }}://{{ . }}{{ $.Values.ingress.subPath | trimSuffix "/" }}/s3/
+{{- end }}
+{{- end }}
