@@ -4,5 +4,4 @@
 .DS_Store
 
 /.cache/
-/build/
 /target/

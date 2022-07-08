@@ -283,7 +283,7 @@ docker.untar:
 # Helm commands #
 #################
 
-helm-chart-dir = helm/baza
+helm-chart-dir := helm/baza
 
 # Lint project Helm chart.
 #
@@ -303,5 +303,5 @@ helm.lint:
 .PHONY: all docs down fmt image lint test up \
         cargo.doc cargo.fmt cargo.lint \
         docker.image docker.tags docker.push docker.tar docker.untar \
-        test.e2e test.unit \
-		helm.lint
+        helm.lint \
+        test.e2e test.unit

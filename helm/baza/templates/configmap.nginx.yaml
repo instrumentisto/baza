@@ -1,0 +1,28 @@
+{{- if .Values.nginx.enabled }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ printf "%s.nginx.conf" (include "baza.fullname" .) | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    helm.sh/chart: {{ include "baza.chart" . | quote }}
+    app.kubernetes.io/name: {{ include "baza.name" . | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+  {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+data:
+{{- with .Values.nginx.conf }}
+  nginx.conf: |
+    {{- . | nindent 4 }}
+{{- end }}
+{{- if index .Values.nginx "conf.d" }}
+{{- range $file := slice (keys (index .Values.nginx "conf.d") | sortAlpha) }}
+{{- with index $.Values.nginx "conf.d" $file }}
+  {{ printf "conf.d__%s" $file | quote }}: |
+    {{- . | nindent 4 }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

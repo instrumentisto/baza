@@ -31,6 +31,14 @@ spec:
     - host: {{ $h | quote }}
       http:
         paths:
+          - path: {{ $.Values.ingress.subPath | trimSuffix "/" }}/s3/(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ include "baza.fullname" $ | quote }}
+                port:
+                  name: s3
+        {{- if $.Values.nginx.enabled }}
           - path: {{ $.Values.ingress.subPath | trimSuffix "/" }}/(.*)
             pathType: ImplementationSpecific
             backend:
@@ -38,6 +46,7 @@ spec:
                 name: {{ include "baza.fullname" $ | quote }}
                 port:
                   name: http
+        {{- end }}
   {{- end }}
 {{- if $.Values.ingress.tls.enabled }}
   tls:

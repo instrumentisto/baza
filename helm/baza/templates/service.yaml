@@ -18,9 +18,15 @@ spec:
     app.kubernetes.io/name: {{ include "baza.name" . | quote }}
     app.kubernetes.io/instance: {{ .Release.Name | quote }}
   ports:
+  {{- if .Values.nginx.enabled }}
     - name: http
-      port: 80
+      port: {{ .Values.nginx.port | int }}
       targetPort: http
+      protocol: TCP
+  {{- end }}
+    - name: s3
+      port: {{ .Values.conf.port | int }}
+      targetPort: s3
       protocol: TCP
 
 {{- range $n := until (.Values.statefulset.replicas | int) }}
@@ -45,8 +51,14 @@ spec:
     app.kubernetes.io/instance: {{ $.Release.Name | quote }}
     statefulset.kubernetes.io/pod-name: {{ printf "%s-%d" (include "baza.fullname" $) $n | quote }}
   ports:
+  {{- if $.Values.nginx.enabled }}
     - name: http
-      port: 80
+      port: {{ $.Values.nginx.port | int }}
       targetPort: http
+      protocol: TCP
+  {{- end }}
+    - name: s3
+      port: {{ $.Values.conf.port | int }}
+      targetPort: s3
       protocol: TCP
 {{- end }}
