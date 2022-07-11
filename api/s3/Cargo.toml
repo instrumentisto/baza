@@ -10,5 +10,5 @@ publish = false
 
 [dependencies]
 baza = { package = "baza-lib", path = "../../lib" }
-hyper = "0.14.19"
+hyper = "0.14.20"
 s3-server = "0.2"
