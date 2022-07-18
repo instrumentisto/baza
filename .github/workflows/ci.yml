@@ -14,9 +14,9 @@ concurrency:
 env:
   CACHE: ${{ (github.event_name == 'push'
               || github.event_name == 'pull_request')
-             && github.ref != 'refs/heads/main'
-             && !startsWith(github.ref, 'refs/tags/v')
-             && !contains(github.event.head_commit.message, '[fresh ci]') }}
+          && github.ref != 'refs/heads/main'
+          && !startsWith(github.ref, 'refs/tags/v')
+          && !contains(github.event.head_commit.message, '[fresh ci]') }}
   RUST_BACKTRACE: 1
   RUST_VER: "1.62"
 
@@ -184,8 +184,8 @@ jobs:
     name: Release Docker image
     needs: ["docker", "test-e2e"]
     if: ${{ github.event_name == 'push'
-            && (github.ref == 'refs/heads/main'
-                || startsWith(github.ref, 'refs/tags/v')) }}
+         && (github.ref == 'refs/heads/main'
+             || startsWith(github.ref, 'refs/tags/v')) }}
     strategy:
       fail-fast: false
       matrix:
@@ -236,7 +236,7 @@ jobs:
           text: ${{ github.ref }}
           regex: '^refs/tags/v((([0-9]+)\.[0-9]+)\.[0-9]+(-.+)?)$'
         if: ${{ steps.skip.outputs.no == 'true'
-                && startsWith(github.ref, 'refs/tags/v') }}
+             && startsWith(github.ref, 'refs/tags/v') }}
       - name: Form version Docker tags
         id: tags
         uses: actions/github-script@v6
@@ -253,20 +253,20 @@ jobs:
             }
             return versions;
         if: ${{ steps.skip.outputs.no == 'true'
-                && startsWith(github.ref, 'refs/tags/v') }}
+             && startsWith(github.ref, 'refs/tags/v') }}
 
       - run: make docker.tags
                   registries=${{ matrix.registry }}
                   of=build-${{ github.run_number }}
                   tags=${{ (startsWith(github.ref, 'refs/tags/v')
                             && steps.tags.outputs.result)
-                           || 'edge' }}
+                        ||     'edge' }}
         if: ${{ steps.skip.outputs.no == 'true' }}
       - run: make docker.push
                   registries=${{ matrix.registry }}
                   tags=${{ (startsWith(github.ref, 'refs/tags/v')
                             && steps.tags.outputs.result)
-                           || 'edge' }}
+                        ||     'edge' }}
         if: ${{ steps.skip.outputs.no == 'true' }}
 
       # On GitHub Container Registry README is automatically updated on pushes.
@@ -280,7 +280,7 @@ jobs:
           DOCKER_USER: ${{ secrets.DOCKERHUB_BOT_USER }}
           DOCKER_PASS: ${{ secrets.DOCKERHUB_BOT_PASS }}
         if: ${{ steps.skip.outputs.no == 'true'
-                && matrix.registry == 'docker.io' }}
+             && matrix.registry == 'docker.io' }}
       - name: Update README on Quay.io
         uses: christian-korneck/update-container-description-action@v1
         with:
@@ -290,4 +290,4 @@ jobs:
         env:
           DOCKER_APIKEY: ${{ secrets.QUAYIO_API_TOKEN }}
         if: ${{ steps.skip.outputs.no == 'true'
-                && matrix.registry == 'quay.io' }}
+             && matrix.registry == 'quay.io' }}
