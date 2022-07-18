@@ -318,7 +318,7 @@ jobs:
         uses: actions-ecosystem/action-regex-match@v2
         with:
           text: ${{ github.ref }}
-          regex: '^refs/tags/chart/${{ matrix.chart }}/((([0-9]+)\.[0-9]+)\.[0-9]+(-.+)?)$'
+          regex: '^refs/tags/helm/${{ matrix.chart }}/((([0-9]+)\.[0-9]+)\.[0-9]+(-.+)?)$'
         if: ${{ steps.skip.outputs.no == 'true' }}
       - name: Verify Git tag version matches `Chart.yaml` version
         run: >
