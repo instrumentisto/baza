@@ -65,12 +65,17 @@ jobs:
 
   helm-lint:
     name: Lint Helm chart
+    if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        chart: ["baza"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: azure/setup-helm@v3
 
-      - run: make helm.lint
+      - run: make helm.lint chart=${{ matrix.chart }}
 
   rustfmt:
     if: ${{ !startsWith(github.ref, 'refs/tags/helm/') }}
@@ -301,8 +306,7 @@ jobs:
   release-helm:
     name: Release Helm chart
     needs: ["helm-lint"]
-    if: ${{ github.event_name == 'push'
-         && startsWith(github.ref, 'refs/tags/helm/') }}
+    if: ${{ startsWith(github.ref, 'refs/tags/helm/') }}
     strategy:
       matrix:
         chart: ["baza"]
