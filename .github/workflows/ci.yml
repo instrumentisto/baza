@@ -323,8 +323,7 @@ jobs:
       - name: Verify Git tag version matches `Chart.yaml` version
         run: >
           test "${{ steps.semver.outputs.group1 }}"
-            == "$(grep -m1 'version: ' helm/${{ matrix.chart }}/Chart.yaml
-                  | cut -d ' ' -f2)"
+            == "$(grep -m1 'version: ' helm/${{ matrix.chart }}/Chart.yaml | cut -d' ' -f2)"
         if: ${{ steps.skip.outputs.no == 'true' }}
 
       - run: make helm.package chart=${{ matrix.chart }}
