@@ -303,10 +303,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - id: skip
-        run: echo ::set-output name=no::${{ !(
+        run: echo ::set-output name=no::${{
                  startsWith(github.ref,
                             format('refs/tags/helm/{0}/', matrix.chart))
-             ) }}
+             }}
 
       - uses: actions/checkout@v3
         if: ${{ steps.skip.outputs.no == 'true' }}
