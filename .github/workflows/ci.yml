@@ -308,6 +308,7 @@ jobs:
     needs: ["helm-lint"]
     if: ${{ startsWith(github.ref, 'refs/tags/helm/') }}
     strategy:
+      max-parallel: 1
       matrix:
         chart: ["baza"]
     runs-on: ubuntu-latest
