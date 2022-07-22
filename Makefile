@@ -337,5 +337,5 @@ endif
 .PHONY: all docs down fmt image lint test up \
         cargo.doc cargo.fmt cargo.lint \
         docker.image docker.tags docker.push docker.tar docker.untar \
-        helm.lint helm.package \
+        helm.lint helm.package helm.release \
         test.e2e test.unit
