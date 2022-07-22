@@ -366,6 +366,13 @@ jobs:
           prerelease: ${{ contains(steps.semver.outputs.group1, '-') }}
         if: ${{ steps.skip.outputs.no == 'true' }}
 
+      - name: Parse Git repository name
+        id: repo
+        uses: actions-ecosystem/action-regex-match@v2
+        with:
+          text: ${{ github.repository }}
+          regex: '^${{ github.repository_owner }}/(.+)$'
+
       # TODO: Find or write a tool to build index idempotently from GitHub
       #       releases, and keep on GitHub Pages only the built index.
       #       https://github.com/helm/chart-releaser/issues/133
@@ -375,11 +382,11 @@ jobs:
           git checkout gh-pages
           git reset --hard
 
-          @mkdir -p helm/
+          mkdir -p helm/
           cp -rf .cache/helm/*.tgz helm/
-          helm repo index charts/ --url=https://instrumentisto.github.io/medea-jason/charts
+          helm repo index charts/ --url=https://${{ github.repository_owner }}.github.io/${{ steps.repo.outputs.group1 }}/helm
 
-          git add -v charts/
+          git add -v helm/
           git commit -m 'Release ${{ steps.semver.outputs.group1 }} version of `${{ matrix.chart }}` Helm chart'
           git checkout -
           git push origin gh-pages
