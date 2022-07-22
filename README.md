@@ -8,6 +8,8 @@ Baza
 | [GitHub Container Registry](https://github.com/orgs/instrumentisto/packages/container/package/baza)
 | [Quay.io](https://quay.io/repository/instrumentisto/baza)
 
+[Changelog](https://github.com/instrumentisto/baza/blob/main/CHANGELOG.md)
+
 Simply scalable files storage without much fuss.
 
 Currently, is under development.

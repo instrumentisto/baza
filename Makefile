@@ -283,15 +283,49 @@ docker.untar:
 # Helm commands #
 #################
 
-helm-chart-dir := helm/baza
+helm-chart := $(or $(chart),baza)
+helm-chart-dir := helm/$(helm-chart)
+
 
 # Lint project Helm chart.
 #
 # Usage:
-#	make helm.lint
+#	make helm.lint [chart=baza]
 
 helm.lint:
 	helm lint $(helm-chart-dir)/
+
+
+# Build Helm package from project Helm chart.
+#
+# Usage:
+#	make helm.package [chart=baza]
+#	                  [out-dir=(.cache/helm|<dir-path>)] [clean=(no|yes]]
+
+helm-package-dir = $(or $(out-dir),.cache/helm)
+
+helm.package:
+ifeq ($(clean),yes)
+	@rm -rf $(helm-package-dir)
+endif
+	@mkdir -p $(helm-package-dir)/
+	helm package --destination=$(helm-package-dir)/ $(helm-chart-dir)/
+
+
+# Create and push Git tag to release project Helm chart.
+#
+# Usage:
+#	make helm.release [chart=baza]
+
+helm-git-tag = helm/$(helm-chart)/$(strip \
+	$(shell grep -m1 'version: ' $(helm-chart-dir)/Chart.yaml | cut -d' ' -f2))
+
+helm.release:
+ifeq ($(shell git rev-parse $(helm-git-tag) >/dev/null 2>&1 && echo "ok"),ok)
+	$(error "Git tag $(helm-git-tag) already exists")
+endif
+	git tag $(helm-git-tag)
+	git push origin refs/tags/$(helm-git-tag)
 
 
 
@@ -303,5 +337,5 @@ helm.lint:
 .PHONY: all docs down fmt image lint test up \
         cargo.doc cargo.fmt cargo.lint \
         docker.image docker.tags docker.push docker.tar docker.untar \
-        helm.lint \
+        helm.lint helm.package helm.release \
         test.e2e test.unit
