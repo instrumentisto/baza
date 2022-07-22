@@ -7,7 +7,7 @@ All user visible changes to this project will be documented in this file. This p
 
 
 ## [0.0.0-edge] · 2022-??-??
-[0.0.0-edge]: /../../tree/helm%2Fbaza%2F0.0.0-edge/helm/baza
+[0.0.0-edge]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.0.0-edge/helm/baza
 
 ### Added
 
@@ -19,7 +19,7 @@ All user visible changes to this project will be documented in this file. This p
     - Handling optional `www.` domain part.
 - Ability to tune existing or specify fully custom Nginx config. ([#3])
 
-[#3]: /../../pull/3
+[#3]: https://github.com/instrumentisto/baza/pull/3
 
 
 
