@@ -99,8 +99,8 @@ jobs:
 
   test-e2e:
     name: E2E tests
-    needs: ["docker"]
     if: ${{ !startsWith(github.ref, 'refs/tags/helm/') }}
+    needs: ["docker"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -193,10 +193,10 @@ jobs:
 
   release-docker:
     name: Release Docker image
-    needs: ["docker", "test-e2e"]
     if: ${{ github.event_name == 'push'
          && (github.ref == 'refs/heads/main'
              || startsWith(github.ref, 'refs/tags/v')) }}
+    needs: ["docker", "test-e2e"]
     strategy:
       fail-fast: false
       matrix:
@@ -303,10 +303,53 @@ jobs:
         if: ${{ steps.skip.outputs.no == 'true'
              && matrix.registry == 'quay.io' }}
 
+  release-github:
+    name: Release on GitHub
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    needs:
+      - clippy
+      - release-docker
+      - rustdoc
+      - rustfmt
+      - test-e2e
+      - test-unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Parse semver versions from Git tag
+        id: semver
+        uses: actions-ecosystem/action-regex-match@v2
+        with:
+          text: ${{ github.ref }}
+          regex: '^refs/tags/v((([0-9]+)\.[0-9]+)\.[0-9]+(-.+)?)$'
+      - name: Verify Git tag version matches `Cargo.toml` version
+        run: |
+          test "${{ steps.semver.outputs.group1 }}" \
+            == "$(grep -m1 'version = "' Cargo.toml | cut -d'"' -f2)"
+
+      - name: Parse CHANGELOG link
+        id: changelog
+        run: echo ::set-output
+                  name=link::${{ github.server_url }}/${{ github.repository }}/blob/v${{ steps.semver.outputs.group1 }}/CHANGELOG.md#$(sed -n '/^## \[${{ steps.semver.outputs.group1 }}\]/{s/^## \[\(.*\)\][^0-9]*\([0-9].*\)/\1--\2/;s/[^0-9a-z-]*//g;p;}' CHANGELOG.md)
+      - name: Parse milestone link
+        id: milestone
+        run: echo ::set-output
+                  name=link::${{ github.server_url }}/${{ github.repository }}/milestone/$(sed -n '/^## \[${{ steps.semver.outputs.group1 }}\]/,/Milestone/{s/.*milestone.\([0-9]*\).*/\1/p;}' CHANGELOG.md)
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ steps.semver.outputs.group1 }}
+          body: >
+            [Changelog](${{ steps.changelog.outputs.link }}) |
+            [Milestone](${{ steps.milestone.outputs.link }})
+          prerelease: ${{ contains(steps.semver.outputs.group1, '-') }}
+
   release-helm:
     name: Release Helm chart
-    needs: ["helm-lint"]
     if: ${{ startsWith(github.ref, 'refs/tags/helm/') }}
+    needs: ["helm-lint"]
     strategy:
       max-parallel: 1
       matrix:
