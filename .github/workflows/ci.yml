@@ -380,6 +380,9 @@ jobs:
         run: |
           set -ex
 
+          git config --local user.email 'actions+${{ github.run_number }}@github.com'
+          git config --local user.name 'GitHub Actions'
+
           git fetch origin gh-pages:gh-pages
           git checkout gh-pages
           git reset --hard
