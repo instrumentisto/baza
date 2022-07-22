@@ -378,6 +378,8 @@ jobs:
       #       https://github.com/helm/chart-releaser/issues/133
       - name: Update Helm repository index
         run: |
+          set -ex
+
           git fetch origin gh-pages:gh-pages
           git checkout gh-pages
           git reset --hard
