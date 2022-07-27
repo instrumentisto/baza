@@ -210,11 +210,9 @@ docker.image:
 		--label org.opencontainers.image.source=$(github_url)/$(github_repo) \
 		--label org.opencontainers.image.revision=$(strip \
 			$(shell git show --pretty=format:%H --no-patch)) \
-		--label org.opencontainers.image.version=$(strip $(VERSION)) \
+		--label org.opencontainers.image.version=$(subst v,,$(strip \
+			$(shell git describe --tags --dirty --match='v*'))) \
 		-t $(OWNER)/$(NAME):$(or $(tag),dev) ./
-# TODO: Enable after first release.
-#		--label org.opencontainers.image.version=$(strip \
-#			$(shell git describe --tags --dirty))
 
 
 # Manually push project Docker images to container registries.

@@ -39,8 +39,8 @@ COPY lib/ /app/lib/
 COPY src/ /app/src/
 
 # Build project distribution binary.
-# TODO: use --out-dir once stabilized
-# TODO: https://github.com/rust-lang/cargo/issues/6790
+# TODO: Use `--out-dir` once stabilized:
+#       https://github.com/rust-lang/cargo/issues/6790
 RUN cargo build -p baza ${rustc_opts}
 
 # Prepare project distribution binary and all dependent dynamic libraries.
