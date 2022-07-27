@@ -6,8 +6,8 @@ All user visible changes to this project will be documented in this file. This p
 
 
 
-## [0.0.0-edge] · 2022-??-??
-[0.0.0-edge]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.0.0-edge/helm/baza
+## [0.1.0] · 2022-07-27
+[0.1.0]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.1.0/helm/baza
 
 ### Added
 

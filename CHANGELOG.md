@@ -6,7 +6,7 @@ All user visible changes to this project will be documented in this file. This p
 
 
 
-## [0.1.0] · 2022-??-??
+## [0.1.0] · 2022-07-27
 [0.1.0]: /../../tree/v0.1.0
 
 ### Added
