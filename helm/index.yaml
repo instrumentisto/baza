@@ -1,0 +1,16 @@
+apiVersion: v1
+entries:
+  baza:
+  - apiVersion: v2
+    appVersion: "0.1"
+    created: "2022-07-27T11:15:47.275116566Z"
+    description: Simply scalable files storage without much fuss.
+    digest: 02f35d087163b193e96eb903b9973b856d773eaae003ec298f42be381cc66998
+    name: baza
+    sources:
+    - https://github.com/instrumetisto/baza
+    type: application
+    urls:
+    - https://instrumentisto.github.io/baza/helm/baza-0.1.0.tgz
+    version: 0.1.0
+generated: "2022-07-27T11:15:47.274132364Z"
