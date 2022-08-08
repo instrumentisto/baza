@@ -10,7 +10,7 @@ publish = false
 
 [dependencies]
 async-fs = "1.5"
-async-trait = "0.1.56"
+async-trait = "0.1.57"
 derive_more = "0.99.17"
 futures = "0.3.21"
 tracerr = "0.3"
