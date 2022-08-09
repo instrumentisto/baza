@@ -4,6 +4,22 @@ Baza changelog
 All user visible changes to this project will be documented in this file. This project uses [Semantic Versioning 2.0.0].
 
 
+## [0.2.0] · ???
+[0.2.0]: /../../tree/v0.2.0
+
+[Milestone](/../../milestone/1)
+
+### Added
+
+- [S3 API]:
+    - `GetObject` method. ([#17])
+    - Authentication. ([#17])
+- [CLI]:
+    - `--access-key` option specifying s3 access key. ([#17])
+    - `--secret-key` option specifying s3 secret key. ([#17]) 
+- [Environment Variables]:
+    - `BAZA_ACCESS_KEY` option specifying s3 access key. ([#17])
+    - `BAZA_SECRET_KEY` option specifying s3 secret key. ([#17]) 
 
 
 ## [0.1.0] · 2022-07-27
@@ -26,6 +42,7 @@ All user visible changes to this project will be documented in this file. This p
 [#1]: /../../pull/1
 [#2]: /../../pull/2
 [#3]: /../../pull/3
+[#17]: /../../pull/17
 
 
 
