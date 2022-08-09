@@ -8,7 +8,11 @@ use baza_api_s3 as s3;
 use cucumber::{gherkin::Step, given, then, when};
 use rusoto_core::{region::Region, HttpClient, RusotoError};
 use rusoto_credential::StaticProvider;
-use rusoto_s3::{PutObjectError, PutObjectRequest, S3Client, S3 as _};
+use rusoto_s3::{
+    GetObjectError, GetObjectRequest, PutObjectError, PutObjectRequest,
+    S3Client, S3 as _,
+};
+use tokio::io::AsyncReadExt as _;
 
 use super::{sample_file, World, DATA_DIR};
 
@@ -30,6 +34,11 @@ async fn file_uploaded(
         None::<String>,
     )
     .await
+}
+
+#[given(regex = r"^there was nothing uploaded to `(\S+)` bucket as `(\S+)`$")]
+async fn nothing_uploaded(_: &mut World) {
+    // nothing is uploaded by default
 }
 
 #[given(regex = "^`(\\S+)` symlink was created on `(\\S+)` bucket \
@@ -100,6 +109,35 @@ async fn invalid_argument_error(w: &mut World) {
         .await;
 }
 
+#[then(regex = r"^GetObject\(`(\S+)`, `(\S+)`\) returns `(\S+)`$")]
+async fn get_object_returns_file(
+    w: &mut World,
+    bucket: String,
+    key: String,
+    sample: String,
+) {
+    let sample = sample_file(sample);
+    let file = get_object(bucket, w.unique.filename(key)).await;
+
+    assert_eq!(sample.len(), file.len());
+    assert!(sample == file);
+}
+
+#[then(regex = r"^GetObject\(`(\S+)`, `(\S+)`\) returns `NoSuchKey` error$")]
+async fn get_object_no_such_key(w: &mut World, bucket: String, key: String) {
+    let key = w.unique.filename(key);
+    let res = try_get_object(bucket, &key).await;
+
+    match &res {
+        Err(RusotoError::Service(GetObjectError::NoSuchKey(k))) => {
+            assert_eq!(k, &key)
+        }
+        _ => {
+            panic!("Expected NoSuchKey error, got: {res:#?}");
+        }
+    }
+}
+
 fn assert_invalid_argument(res: Result<(), RusotoError<PutObjectError>>) {
     match &res {
         Err(RusotoError::Unknown(resp))
@@ -142,12 +180,40 @@ async fn try_put_object(
     s3_client().put_object(req).await.map(drop)
 }
 
+async fn get_object(bucket: impl ToString, key: impl ToString) -> Vec<u8> {
+    try_get_object(bucket, key)
+        .await
+        .unwrap_or_else(|e| panic!("GetObjectRequest failed: {}", e))
+}
+
+async fn try_get_object(
+    bucket: impl ToString,
+    key: impl ToString,
+) -> Result<Vec<u8>, RusotoError<GetObjectError>> {
+    let req = GetObjectRequest {
+        bucket: bucket.to_string(),
+        key: key.to_string(),
+        ..GetObjectRequest::default()
+    };
+
+    let resp = s3_client().get_object(req).await?;
+    let mut buf = Vec::new();
+    resp.body
+        .unwrap()
+        .into_async_read()
+        .read_to_end(&mut buf)
+        .await
+        .unwrap();
+
+    Ok(buf)
+}
+
 /// Creates a new [`S3Client`] for performing requests to the S3 HTTP API being
 /// tested.
 fn s3_client() -> S3Client {
     S3Client::new_with(
         HttpClient::new().expect("Failed to initialize Rusoto HTTP client"),
-        StaticProvider::new_minimal("test".into(), "test".into()),
+        StaticProvider::new_minimal("baza".into(), "baza".into()),
         Region::Custom {
             name: "test".into(),
             endpoint: API_URL.into(),

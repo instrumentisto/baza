@@ -12,3 +12,4 @@ publish = false
 baza = { package = "baza-lib", path = "../../lib" }
 hyper = "0.14.20"
 s3-server = "0.2"
+secrecy = "0.8"

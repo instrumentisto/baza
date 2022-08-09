@@ -178,6 +178,30 @@ impl Exec<CreateSymlink> for Storage {
     }
 }
 
+/// Operation for getting an existing file.
+#[derive(Debug, Clone)]
+pub struct GetFile {
+    /// [`RelativePath`] of the file.
+    pub path: RelativePath,
+}
+
+#[async_trait]
+impl Exec<GetFile> for Storage {
+    type Ok = Option<Vec<u8>>;
+    type Err = Traced<io::Error>;
+
+    #[tracing::instrument(level = "debug", err(Debug))]
+    async fn exec(&self, op: GetFile) -> Result<Self::Ok, Self::Err> {
+        let path = self.data_dir.join(op.path);
+
+        match async_fs::read(&path).await {
+            Ok(bytes) => Ok(Some(bytes)),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(None),
+            Err(e) => Err(tracerr::new!(e)),
+        }
+    }
+}
+
 /// Filesystem path relative to the configured root folder.
 ///
 /// # Format
