@@ -10,7 +10,7 @@ publish = false
 
 [dependencies]
 baza = { package = "baza-lib", path = "../../lib" }
-hyper = "0.14.20"
+hyper = "0.14"
 s3-server = "0.2"
 secrecy = "0.8"
 tokio-util = { version = "0.7", features = ["io", "compat"] }
