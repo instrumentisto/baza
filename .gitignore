@@ -5,3 +5,5 @@
 
 /.cache/
 /target/
+
+shell.nix

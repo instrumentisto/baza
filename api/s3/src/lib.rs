@@ -13,12 +13,14 @@ use s3_server::{
     S3Service, S3Storage, SimpleAuth,
 };
 use secrecy::{ExposeSecret, SecretString};
+use tokio_util::{compat::FuturesAsyncReadCompatExt as _, io::ReaderStream};
 
 use baza::{
     async_trait,
     derive_more::{Display, Error, From},
     futures::future,
-    tracing, CreateFile, CreateSymlink, Exec, GetFile, RelativePath,
+    tracing, CreateFile, CreateSymlink, Exec, GetFile, ReadOnlyFile,
+    RelativePath,
 };
 
 /// [`dto::PutObjectRequest::metadata`] key where [`CreateSymlink::src`] is
@@ -79,7 +81,7 @@ impl<S, E1, E2, E3> S3Storage for S3<S>
 where
     S: Exec<CreateFile<dto::ByteStream>, Err = E1>
         + Exec<CreateSymlink, Err = E2>
-        + Exec<GetFile, Ok = Option<Vec<u8>>, Err = E3>
+        + Exec<GetFile, Ok = Option<ReadOnlyFile>, Err = E3>
         + fmt::Debug
         + Send
         + Sync
@@ -164,7 +166,7 @@ where
     ) -> S3StorageResult<dto::GetObjectOutput, dto::GetObjectError> {
         let path = parse_s3_path(input.bucket, input.key.clone())?;
 
-        let bytes = self
+        let file = self
             .0
             .exec(GetFile { path })
             .await
@@ -173,9 +175,11 @@ where
                 dto::GetObjectError::NoSuchKey(input.key),
             ))?;
 
+        let reader = ReaderStream::new(file.compat());
+
         tracing::info!("OK");
         Ok(dto::GetObjectOutput {
-            body: Some(bytes.into()),
+            body: Some(dto::ByteStream::new(reader)),
             ..dto::GetObjectOutput::default()
         })
     }
