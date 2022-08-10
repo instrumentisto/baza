@@ -19,6 +19,10 @@ use super::{sample_file, World, DATA_DIR};
 /// URL of S3 HTTP API to run E2E tests against.
 const API_URL: &str = "http://localhost:9294";
 
+/// Response type to a [`GetObjectRequst`].
+pub(super) type GetObjectResponse =
+    Result<Vec<u8>, RusotoError<GetObjectError>>;
+
 #[given(regex = r"^`(\S+)` was uploaded to `(\S+)` bucket as `(\S+)`$")]
 #[when(regex = r"^`(\S+)` is uploaded to `(\S+)` bucket as `(\S+)`$")]
 async fn file_uploaded(
@@ -109,29 +113,29 @@ async fn invalid_argument_error(w: &mut World) {
         .await;
 }
 
-#[then(regex = r"^GetObject\(`(\S+)`, `(\S+)`\) returns `(\S+)`$")]
-async fn get_object_returns_file(
-    w: &mut World,
-    bucket: String,
-    key: String,
-    sample: String,
-) {
-    let sample = sample_file(sample);
-    let file = get_object(bucket, w.unique.filename(key)).await;
+#[when(regex = r"^trying to load `(\S+)` from `(\S+)` bucket$")]
+async fn trying_to_load_file(w: &mut World, key: String, bucket: String) {
+    w.get_object_response =
+        Some(try_get_object(bucket, w.unique.filename(key)).await);
+}
+
+#[then(regex = r"^`(\S+)` file is returned$")]
+async fn file_is_returned(w: &mut World, name: String) {
+    let sample = sample_file(name);
+
+    let file = w
+        .last_get_object_response()
+        .unwrap_or_else(|e| panic!("GetObjectRequest failed: {}", e));
 
     assert_eq!(sample.len(), file.len());
     assert!(sample == file);
 }
 
-#[then(regex = r"^GetObject\(`(\S+)`, `(\S+)`\) returns `NoSuchKey` error$")]
-async fn get_object_no_such_key(w: &mut World, bucket: String, key: String) {
-    let key = w.unique.filename(key);
-    let res = try_get_object(bucket, &key).await;
-
-    match &res {
-        Err(RusotoError::Service(GetObjectError::NoSuchKey(k))) => {
-            assert_eq!(k, &key)
-        }
+#[then(regex = r"^`NoSuchKey` error is returned$")]
+async fn error_is_returned(w: &mut World) {
+    let res = w.last_get_object_response();
+    match res {
+        Err(RusotoError::Service(GetObjectError::NoSuchKey(_))) => {}
         _ => {
             panic!("Expected NoSuchKey error, got: {res:#?}");
         }
@@ -180,16 +184,10 @@ async fn try_put_object(
     s3_client().put_object(req).await.map(drop)
 }
 
-async fn get_object(bucket: impl ToString, key: impl ToString) -> Vec<u8> {
-    try_get_object(bucket, key)
-        .await
-        .unwrap_or_else(|e| panic!("`GetObjectRequest` failed: {e}"))
-}
-
 async fn try_get_object(
     bucket: impl ToString,
     key: impl ToString,
-) -> Result<Vec<u8>, RusotoError<GetObjectError>> {
+) -> GetObjectResponse {
     let req = GetObjectRequest {
         bucket: bucket.to_string(),
         key: key.to_string(),
@@ -206,6 +204,19 @@ async fn try_get_object(
         .unwrap();
 
     Ok(buf)
+}
+
+impl World {
+    /// Takes the last [`GetObjectResponse`].
+    ///
+    /// # Panics
+    ///
+    /// If there is no a [`GetObjectResponse`] in this [`World`].
+    fn last_get_object_response(&mut self) -> GetObjectResponse {
+        self.get_object_response
+            .take()
+            .expect("No `GetObjectResponse`")
+    }
 }
 
 /// Creates a new [`S3Client`] for performing requests to the S3 HTTP API being

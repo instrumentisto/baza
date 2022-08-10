@@ -25,6 +25,9 @@ struct World {
 
     /// S3 object keys to check for validity.
     keys_to_check: HashSet<String>,
+
+    /// Latest [`s3::GetObjectResponse`] (if any).
+    get_object_response: Option<s3::GetObjectResponse>,
 }
 
 #[async_trait(?Send)]
