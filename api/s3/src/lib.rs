@@ -9,15 +9,18 @@ use std::{
 use hyper::{server::Server, service::make_service_fn};
 use s3_server::{
     dto,
-    errors::{S3Error, S3ErrorCode, S3StorageResult},
-    S3Service, S3Storage,
+    errors::{S3Error, S3ErrorCode, S3StorageError, S3StorageResult},
+    S3Service, S3Storage, SimpleAuth,
 };
+use secrecy::{ExposeSecret as _, SecretString};
+use tokio_util::{compat::FuturesAsyncReadCompatExt as _, io::ReaderStream};
 
 use baza::{
     async_trait,
     derive_more::{Display, Error, From},
     futures::future,
-    tracing, CreateFile, CreateSymlink, Exec, RelativePath,
+    tracing, CreateFile, CreateSymlink, Exec, GetFile, ReadOnlyFile,
+    RelativePath,
 };
 
 /// [`dto::PutObjectRequest::metadata`] key where [`CreateSymlink::src`] is
@@ -32,12 +35,23 @@ pub const SYMLINK_META_KEY: &str = "symlink-to";
 pub async fn run_http_server<S, A>(
     storage: S,
     addr: A,
+    access_key: SecretString,
+    secret_key: SecretString,
 ) -> Result<(), RunHttpServerError>
 where
     A: ToSocketAddrs,
     S3<S>: S3Storage + Send + Sync + 'static,
 {
-    let service = S3Service::new(S3(storage)).into_shared();
+    let mut auth = SimpleAuth::new();
+    auth.register(
+        access_key.expose_secret().clone(),
+        secret_key.expose_secret().clone(),
+    );
+
+    let mut s3 = S3Service::new(S3(storage));
+    s3.set_auth(auth);
+
+    let service = s3.into_shared();
     let listener = TcpListener::bind(addr)?;
     let make_service =
         make_service_fn(move |_| future::ok::<_, Infallible>(service.clone()));
@@ -63,16 +77,18 @@ pub enum RunHttpServerError {
 pub struct S3<T>(T);
 
 #[async_trait]
-impl<S, E1, E2> S3Storage for S3<S>
+impl<S, E1, E2, E3> S3Storage for S3<S>
 where
     S: Exec<CreateFile<dto::ByteStream>, Err = E1>
         + Exec<CreateSymlink, Err = E2>
+        + Exec<GetFile, Ok = Option<ReadOnlyFile>, Err = E3>
         + fmt::Debug
         + Send
         + Sync
         + 'static,
     E1: fmt::Display,
     E2: fmt::Display,
+    E3: fmt::Display,
 {
     async fn complete_multipart_upload(
         &self,
@@ -140,11 +156,32 @@ where
         unimplemented!()
     }
 
+    #[tracing::instrument(
+        skip_all,
+        fields(bucket = input.bucket.as_str(), key = input.key.as_str()),
+    )]
     async fn get_object(
         &self,
-        _: dto::GetObjectRequest,
+        input: dto::GetObjectRequest,
     ) -> S3StorageResult<dto::GetObjectOutput, dto::GetObjectError> {
-        unimplemented!()
+        let path = parse_s3_path(input.bucket, input.key.clone())?;
+
+        let file = self
+            .0
+            .exec(GetFile { path })
+            .await
+            .map_err(|e| internal_error("GetFile operation failed", e))?
+            .ok_or(S3StorageError::Operation(
+                dto::GetObjectError::NoSuchKey(input.key),
+            ))?;
+
+        let reader = ReaderStream::new(file.compat());
+
+        tracing::info!("OK");
+        Ok(dto::GetObjectOutput {
+            body: Some(dto::ByteStream::new(reader)),
+            ..dto::GetObjectOutput::default()
+        })
     }
 
     async fn head_bucket(

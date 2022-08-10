@@ -1,11 +1,13 @@
 use std::{
     fmt, io,
     path::{Path, PathBuf},
+    pin::Pin,
+    task,
 };
 
 use async_fs::File;
 use derive_more::{Display, Error};
-use futures::{pin_mut, AsyncWriteExt as _, Stream, StreamExt as _};
+use futures::{pin_mut, AsyncRead, AsyncWriteExt as _, Stream, StreamExt as _};
 use tracerr::Traced;
 use uuid::Uuid;
 
@@ -175,6 +177,43 @@ impl Exec<CreateSymlink> for Storage {
             .await
             .map_err(tracerr::wrap!())?;
         async_fs::rename(&tmp, dest).await.map_err(tracerr::wrap!())
+    }
+}
+
+/// Operation for getting an existing file.
+#[derive(Debug, Clone)]
+pub struct GetFile {
+    /// [`RelativePath`] of the file.
+    pub path: RelativePath,
+}
+
+#[async_trait]
+impl Exec<GetFile> for Storage {
+    type Ok = Option<ReadOnlyFile>;
+    type Err = Traced<io::Error>;
+
+    #[tracing::instrument(level = "debug", err(Debug))]
+    async fn exec(&self, op: GetFile) -> Result<Self::Ok, Self::Err> {
+        let path = self.data_dir.join(op.path);
+
+        match File::open(&path).await {
+            Ok(f) => Ok(Some(ReadOnlyFile(f))),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => Ok(None),
+            Err(e) => Err(tracerr::new!(e)),
+        }
+    }
+}
+
+/// Read-only [`File`].
+pub struct ReadOnlyFile(File);
+
+impl AsyncRead for ReadOnlyFile {
+    fn poll_read(
+        mut self: Pin<&mut Self>,
+        cx: &mut task::Context<'_>,
+        buf: &mut [u8],
+    ) -> task::Poll<io::Result<usize>> {
+        Pin::new(&mut self.0).poll_read(cx, buf)
     }
 }
 

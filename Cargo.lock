@@ -134,6 +134,7 @@ dependencies = [
  "baza-api-s3",
  "baza-lib",
  "clap",
+ "secrecy",
  "tokio",
  "tracing-subscriber",
 ]
@@ -145,6 +146,8 @@ dependencies = [
  "baza-lib",
  "hyper",
  "s3-server",
+ "secrecy",
+ "tokio-util",
 ]
 
 [[package]]
@@ -1751,6 +1754,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "secrecy"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9bd1c54ea06cfd2f6b63219704de0b9b4f72dcc2b8fdef820be6cd799780e91e"
+dependencies = [
+ "zeroize",
+]
+
+[[package]]
 name = "security-framework"
 version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2094,6 +2106,7 @@ checksum = "cc463cd8deddc3770d20f9852143d50bf6094e640b485cb2e189a2099085ff45"
 dependencies = [
  "bytes",
  "futures-core",
+ "futures-io",
  "futures-sink",
  "pin-project-lite",
  "tokio",

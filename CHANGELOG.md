@@ -6,6 +6,26 @@ All user visible changes to this project will be documented in this file. This p
 
 
 
+## [0.2.0] · 2022-08-??
+[0.2.0]: /../../tree/v0.2.0
+
+[Milestone](/../../milestone/2)
+
+### Added
+
+- [S3 API]:
+    - `GetObject` method. ([#17])
+    - Authentication via access and secret keys. ([#17])
+- [CLI]:
+    - `--access-key` option specifying S3 access key. ([#17])
+    - `--secret-key` option specifying S3 secret key. ([#17]) 
+- Environment variables:
+    - `BAZA_ACCESS_KEY` specifying S3 access key. ([#17])
+    - `BAZA_SECRET_KEY` specifying S3 secret key. ([#17]) 
+
+
+
+
 ## [0.1.0] · 2022-07-27
 [0.1.0]: /../../tree/v0.1.0
 
@@ -26,6 +46,7 @@ All user visible changes to this project will be documented in this file. This p
 [#1]: /../../pull/1
 [#2]: /../../pull/2
 [#3]: /../../pull/3
+[#17]: /../../pull/17
 
 
 

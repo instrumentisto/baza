@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use baza::{tracing::Level, Storage};
 use baza_api_s3 as s3;
+use secrecy::SecretString;
 
 #[tokio::main]
 async fn main() -> Result<(), String> {
@@ -15,9 +16,14 @@ async fn main() -> Result<(), String> {
         format!("Failed to initialize `Storage`: {e}: {}", e.trace())
     })?;
 
-    s3::run_http_server(storage, ("0.0.0.0", args.port))
-        .await
-        .map_err(|e| format!("Failed to run S3 HTTP server: {e}"))
+    s3::run_http_server(
+        storage,
+        ("0.0.0.0", args.port),
+        args.access_key,
+        args.secret_key,
+    )
+    .await
+    .map_err(|e| format!("Failed to run S3 HTTP server: {e}"))
 }
 
 /// CLI options.
@@ -36,4 +42,22 @@ struct CliOpts {
     /// Port to run S3 HTTP API on.
     #[clap(short, long, default_value_t = 9294)]
     port: u16,
+
+    /// S3 API access key.
+    #[clap(
+        long,
+        parse(try_from_str),
+        env = "BAZA_ACCESS_KEY",
+        default_value = "baza"
+    )]
+    access_key: SecretString,
+
+    /// S3 API secret key.
+    #[clap(
+        long,
+        parse(try_from_str),
+        env = "BAZA_SECRET_KEY",
+        default_value = "baza"
+    )]
+    secret_key: SecretString,
 }
