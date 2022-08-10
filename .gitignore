@@ -2,8 +2,7 @@
 /.vscode/
 /*.iml
 .DS_Store
+shell.nix
 
 /.cache/
 /target/
-
-shell.nix

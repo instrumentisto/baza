@@ -2,7 +2,6 @@ use std::path::PathBuf;
 
 use baza::{tracing::Level, Storage};
 use baza_api_s3 as s3;
-
 use secrecy::SecretString;
 
 #[tokio::main]

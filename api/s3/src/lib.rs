@@ -12,7 +12,7 @@ use s3_server::{
     errors::{S3Error, S3ErrorCode, S3StorageError, S3StorageResult},
     S3Service, S3Storage, SimpleAuth,
 };
-use secrecy::{ExposeSecret, SecretString};
+use secrecy::{ExposeSecret as _, SecretString};
 use tokio_util::{compat::FuturesAsyncReadCompatExt as _, io::ReaderStream};
 
 use baza::{

@@ -2,8 +2,10 @@ Feature: GetObject
 
   Scenario: GetObject: existing file
     Given `rms.jpg` was uploaded to `data` bucket as `my_file`
-    Then GetObject(`data`, `my_file`) returns `rms.jpg`
+    When trying to load `my_file` from `data` bucket
+    Then `rms.jpg` file is returned
 
   Scenario: GetObject: non-existing file
     Given there was nothing uploaded to `data` bucket as `my_file`
-    Then GetObject(`data`, `my_file`) returns `NoSuchKey` error
+    When trying to load `my_file` from `data` bucket
+    Then `NoSuchKey` error is returned

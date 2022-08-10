@@ -156,7 +156,7 @@ async fn put_object(
 ) {
     try_put_object(bucket, key, body, symlink_to)
         .await
-        .unwrap_or_else(|e| panic!("PutObjectRequest failed: {}", e));
+        .unwrap_or_else(|e| panic!("`PutObjectRequest` failed: {e}"));
 }
 
 async fn try_put_object(
@@ -183,7 +183,7 @@ async fn try_put_object(
 async fn get_object(bucket: impl ToString, key: impl ToString) -> Vec<u8> {
     try_get_object(bucket, key)
         .await
-        .unwrap_or_else(|e| panic!("GetObjectRequest failed: {}", e))
+        .unwrap_or_else(|e| panic!("`GetObjectRequest` failed: {e}"))
 }
 
 async fn try_get_object(
