@@ -19,7 +19,7 @@ use super::{sample_file, World, DATA_DIR};
 /// URL of S3 HTTP API to run E2E tests against.
 const API_URL: &str = "http://localhost:9294";
 
-/// Response type to a [`GetObjectRequst`].
+/// Response to a [`GetObjectRequest`].
 pub(super) type GetObjectResponse =
     Result<Vec<u8>, RusotoError<GetObjectError>>;
 
@@ -125,7 +125,7 @@ async fn file_is_returned(w: &mut World, name: String) {
 
     let file = w
         .last_get_object_response()
-        .unwrap_or_else(|e| panic!("GetObjectRequest failed: {}", e));
+        .unwrap_or_else(|e| panic!("`GetObjectRequest` failed: {}", e));
 
     assert_eq!(sample.len(), file.len());
     assert!(sample == file);
