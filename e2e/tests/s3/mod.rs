@@ -19,10 +19,6 @@ use super::{sample_file, World, DATA_DIR};
 /// URL of S3 HTTP API to run E2E tests against.
 const API_URL: &str = "http://localhost:9294";
 
-/// Response to a [`GetObjectRequest`].
-pub(super) type GetObjectResponse =
-    Result<Vec<u8>, RusotoError<GetObjectError>>;
-
 #[given(regex = r"^`(\S+)` was uploaded to `(\S+)` bucket as `(\S+)`$")]
 #[when(regex = r"^`(\S+)` is uploaded to `(\S+)` bucket as `(\S+)`$")]
 async fn file_uploaded(
@@ -125,10 +121,10 @@ async fn file_is_returned(w: &mut World, name: String) {
 
     let file = w
         .last_get_object_response()
-        .unwrap_or_else(|e| panic!("`GetObjectRequest` failed: {}", e));
+        .unwrap_or_else(|e| panic!("`GetObjectRequest` failed: {e}"));
 
     assert_eq!(sample.len(), file.len());
-    assert!(sample == file);
+    assert!(sample == file, "Bytes don't match");
 }
 
 #[then(regex = r"^`NoSuchKey` error is returned$")]
@@ -136,9 +132,7 @@ async fn error_is_returned(w: &mut World) {
     let res = w.last_get_object_response();
     match res {
         Err(RusotoError::Service(GetObjectError::NoSuchKey(_))) => {}
-        _ => {
-            panic!("Expected NoSuchKey error, got: {res:#?}");
-        }
+        _ => panic!("Expected `NoSuchKey` error, got: {res:#?}"),
     }
 }
 
@@ -146,9 +140,7 @@ fn assert_invalid_argument(res: Result<(), RusotoError<PutObjectError>>) {
     match &res {
         Err(RusotoError::Unknown(resp))
             if resp.body_as_str().contains("InvalidArgument") => {}
-        _ => {
-            panic!("Expected InvalidArgument error, got: {res:#?}");
-        }
+        _ => panic!("Expected `InvalidArgument` error, got: {res:#?}"),
     }
 }
 
@@ -162,6 +154,10 @@ async fn put_object(
         .await
         .unwrap_or_else(|e| panic!("`PutObjectRequest` failed: {e}"));
 }
+
+/// Response to a [`GetObjectRequest`].
+pub(super) type GetObjectResponse =
+    Result<Vec<u8>, RusotoError<GetObjectError>>;
 
 async fn try_put_object(
     bucket: impl ToString,
@@ -206,19 +202,6 @@ async fn try_get_object(
     Ok(buf)
 }
 
-impl World {
-    /// Takes the last [`GetObjectResponse`].
-    ///
-    /// # Panics
-    ///
-    /// If there is no a [`GetObjectResponse`] in this [`World`].
-    fn last_get_object_response(&mut self) -> GetObjectResponse {
-        self.get_object_response
-            .take()
-            .expect("No `GetObjectResponse`")
-    }
-}
-
 /// Creates a new [`S3Client`] for performing requests to the S3 HTTP API being
 /// tested.
 fn s3_client() -> S3Client {
@@ -230,4 +213,17 @@ fn s3_client() -> S3Client {
             endpoint: API_URL.into(),
         },
     )
+}
+
+impl World {
+    /// Takes the last [`GetObjectResponse`], stored in this [`World`].
+    ///
+    /// # Panics
+    ///
+    /// If there is no [`GetObjectResponse`] in this [`World`].
+    fn last_get_object_response(&mut self) -> GetObjectResponse {
+        self.get_object_response
+            .take()
+            .expect("No `GetObjectResponse`")
+    }
 }
