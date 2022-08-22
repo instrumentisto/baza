@@ -9,7 +9,7 @@ license = "BlueOak-1.0.0"
 publish = false
 
 [dev-dependencies]
-async-fs = "1.5"
+async-fs = "1.6"
 baza = { package = "baza-lib", path = "../lib" }
 baza-api-s3 = { path = "../api/s3" }
 cucumber = "0.13"
