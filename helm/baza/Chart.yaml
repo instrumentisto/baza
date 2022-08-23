@@ -1,8 +1,8 @@
 apiVersion: v2
 name: baza
 description: Simply scalable files storage without much fuss.
-version: 0.1.0
-appVersion: "0.1"
+version: 0.1.1
+appVersion: "0.2"
 type: application
 sources:
   - https://github.com/instrumetisto/baza

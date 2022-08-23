@@ -6,6 +6,18 @@ All user visible changes to this project will be documented in this file. This p
 
 
 
+## [0.1.1] · 2022-08-23
+[0.1.1]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.1.1/helm/baza
+
+### Upgraded
+
+- [Baza Docker image] to [0.2 version][020-1].
+
+[020-1]: https://github.com/instrumentisto/baza/releases/tag/v0.2.0
+
+
+
+
 ## [0.1.0] · 2022-07-27
 [0.1.0]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.1.0/helm/baza
 
@@ -24,5 +36,6 @@ All user visible changes to this project will be documented in this file. This p
 
 
 
+[Baza Docker image]: https://hub.docker.com/r/instrumentisto/baza
 [Nginx]: https://www.nginx.com
 [Semantic Versioning 2.0.0]: https://semver.org
