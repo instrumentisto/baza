@@ -14,7 +14,7 @@ All user visible changes to this project will be documented in this file. This p
 ### Added
 
 - Deployment:
-    - `nginx.image.credentials` to [Helm] chart values. ([#21])
+    - `image.credentials` and `nginx.image.credentials` to [Helm] chart values. ([#21])
 
 
 
