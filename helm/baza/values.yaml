@@ -119,6 +119,7 @@ nginx:
     repository: docker.io/nginx
     tag: stable-alpine
     pullPolicy: IfNotPresent
+    credentials: {}
 
   port: 8080
 
