@@ -6,6 +6,18 @@ All user visible changes to this project will be documented in this file. This p
 
 
 
+## [0.2.0] · 2022-08-24
+[0.2.0]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.2.0/helm/baza
+
+### Added
+
+- `image.credentials` and `nginx.image.credentials` values. ([#21])
+
+[#21]: https://github.com/instrumentisto/baza/pull/21
+
+
+
+
 ## [0.1.1] · 2022-08-23
 [0.1.1]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.1.1/helm/baza
 

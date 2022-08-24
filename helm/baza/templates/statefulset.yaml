@@ -77,6 +77,15 @@ spec:
     {{- with .Values.statefulset.tolerations }}
       tolerations: {{- toYaml . | nindent 8 }}
     {{- end }}
+    {{- if or .Values.image.credentials (and .Values.nginx.enabled .Values.nginx.image.credentials) }}
+      imagePullSecrets:
+      {{- if .Values.image.credentials }}
+        - name: {{ printf "%s.baza.registry" (include "baza.fullname" .) | quote }}
+      {{- end }}
+      {{- if and .Values.nginx.enabled .Values.nginx.image.credentials }}
+        - name: {{ printf "%s.nginx.registry" (include "baza.fullname" .) | quote }}
+      {{- end }}
+    {{- end }}
       containers:
         - name: baza
           image: {{ printf "%s:%s" .Values.image.repository .Values.image.tag | quote }}
