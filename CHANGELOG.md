@@ -6,19 +6,6 @@ All user visible changes to this project will be documented in this file. This p
 
 
 
-## [0.3.0] · TBD
-[0.3.0]: /../../tree/v0.3.0
-
-[Diff](/../../compare/v0.2.0...v0.3.0) | [Milestone](/../../milestone/3)
-
-### Added
-
-- Deployment:
-    - `image.credentials` and `nginx.image.credentials` to [Helm] chart values. ([#21])
-
-
-
-
 ## [0.2.0] · 2022-08-23
 [0.2.0]: /../../tree/v0.2.0
 

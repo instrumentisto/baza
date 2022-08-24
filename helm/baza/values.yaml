@@ -3,6 +3,9 @@ image:
   tag: 0.2
   pullPolicy: IfNotPresent
   credentials: {}
+    #registry: ghcr.io
+    #username: changeme
+    #password: changeme
 
 # Additional labels to apply to all Kubernetes resources created by this chart.
 labels: {}
@@ -121,6 +124,9 @@ nginx:
     tag: stable-alpine
     pullPolicy: IfNotPresent
     credentials: {}
+      #registry: docker.io
+      #username: changeme
+      #password: changeme
 
   port: 8080
 
