@@ -2,6 +2,7 @@ image:
   repository: ghcr.io/instrumentisto/baza
   tag: 0.2
   pullPolicy: IfNotPresent
+  credentials: {}
 
 # Additional labels to apply to all Kubernetes resources created by this chart.
 labels: {}
