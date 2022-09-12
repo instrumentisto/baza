@@ -16,6 +16,8 @@ conf:
   port: 9294
   log:
     level: info
+  access_key: changeme
+  secret_key: changeme
 
 statefulset:
   replicas: 1
@@ -129,6 +131,9 @@ nginx:
       #password: changeme
 
   port: 8080
+
+  env: {}
+    #JWT_SECRET: changeme
 
   # Overwrites `/etc/nginx/nginx.conf`, if specified.
   conf: ""

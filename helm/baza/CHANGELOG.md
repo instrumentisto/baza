@@ -6,6 +6,17 @@ All user visible changes to this project will be documented in this file. This p
 
 
 
+## [0.3.0] · 2022-09-12
+[0.3.0]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.3.0/helm/baza
+
+### Added
+
+- Explicit `conf.access_key` and `conf.secret_key` values.
+- `nginx.env` value.
+
+
+
+
 ## [0.2.0] · 2022-08-24
 [0.2.0]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.2.0/helm/baza
 

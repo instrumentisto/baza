@@ -29,6 +29,7 @@ spec:
       {{- end }}
       annotations:
         kubectl.kubernetes.io/default-container: baza
+        checksum/env: {{ pick (include (print $.Template.BasePath "/secret.env.yaml") . | fromYaml) "data" | toYaml | sha256sum | quote }}
       {{- if .Values.nginx.enabled }}
         checksum/nginx.conf: {{ pick (include (print $.Template.BasePath "/configmap.nginx.yaml") . | fromYaml) "data" | toYaml | sha256sum | quote }}
       {{- end }}
@@ -95,6 +96,9 @@ spec:
             "-l", {{ .Values.conf.log.level | quote }},
             "-p", {{ .Values.conf.port | int | quote }},
           ]
+          envFrom:
+            - secretRef:
+                name: {{ printf "%s.env" (include "baza.fullname" .) | quote }}
           ports:
             - name: s3
               containerPort: {{ .Values.conf.port | int }}
@@ -109,6 +113,9 @@ spec:
         - name: nginx
           image: {{ printf "%s:%s" .Values.nginx.image.repository .Values.nginx.image.tag | quote }}
           imagePullPolicy: {{ .Values.nginx.image.pullPolicy | quote }}
+          envFrom:
+            - secretRef:
+                name: {{ printf "%s.env" (include "baza.fullname" .) | quote }}
           ports:
             - name: http
               containerPort: {{ .Values.nginx.port | int }}
