@@ -4,20 +4,18 @@ mod s3;
 
 use std::{
     collections::{HashMap, HashSet},
-    convert::Infallible,
     fs,
 };
 
-use cucumber::WorldInit;
 use once_cell::sync::Lazy;
 use rand::{distributions::Alphanumeric, thread_rng, Rng as _};
 
-use baza::{async_trait, futures::TryStreamExt as _};
+use baza::futures::TryStreamExt as _;
 
 /// Path to the directory where files are stored during E2E tests running.
 const DATA_DIR: &str = "../.cache/baza/data";
 
-#[derive(Debug, Default, WorldInit)]
+#[derive(cucumber::World, Debug, Default)]
 struct World {
     /// Random string of the concrete scenario run, to enrich its data with, for
     /// avoiding possible collisions with other running scenarios.
@@ -30,21 +28,12 @@ struct World {
     get_object_response: Option<s3::GetObjectResponse>,
 }
 
-#[async_trait(?Send)]
-impl cucumber::World for World {
-    type Error = Infallible;
-
-    async fn new() -> Result<Self, Self::Error> {
-        Ok(Self::default())
-    }
-}
-
 #[tokio::main]
 async fn main() -> Result<(), String> {
     clear_data_dir().await?;
 
-    World::cucumber()
-        .steps(World::collection())
+    <World as cucumber::World>::cucumber()
+        .with_writer(cucumber::writer::Libtest::or_basic())
         .repeat_failed()
         .fail_on_skipped()
         .max_concurrent_scenarios(10)
