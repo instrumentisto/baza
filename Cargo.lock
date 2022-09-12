@@ -45,6 +45,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.64"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9a8f622bcf6ff3df478e9deba3e03e4e04b300f8e6a139e192c05fa3490afc7"
+
+[[package]]
 name = "async-channel"
 version = "1.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -453,10 +459,11 @@ dependencies = [
 
 [[package]]
 name = "cucumber"
-version = "0.13.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "399fa7fc41ab7163fc49d5c2613b582b04bbf2d5342fcb1946fc1efd5b71193c"
+checksum = "1a8485f96ac06de5b9c972984eea49ca38ba87a2a6615d9b82cd0ef9431899ed"
 dependencies = [
+ "anyhow",
  "async-trait",
  "atty",
  "clap",
@@ -464,10 +471,12 @@ dependencies = [
  "cucumber-codegen",
  "cucumber-expressions",
  "derive_more",
+ "drain_filter_polyfill",
  "either",
  "futures",
  "gherkin",
  "globwalk",
+ "humantime",
  "inventory",
  "itertools",
  "linked-hash-map",
@@ -478,9 +487,9 @@ dependencies = [
 
 [[package]]
 name = "cucumber-codegen"
-version = "0.13.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a6f939adacd640286fb794ec392c068367991795db4c2c9112b748fb4fbf04f"
+checksum = "8d6593b11205bfc7dce7dc5347ac83b4c8718137569e3e59b0287dd72852a030"
 dependencies = [
  "cucumber-expressions",
  "inflections",
@@ -559,6 +568,12 @@ dependencies = [
  "redox_users",
  "winapi",
 ]
+
+[[package]]
+name = "drain_filter_polyfill"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca9f76bdd86dfc8d64eecb0484d02ad4cf0e6767d4682f686d1b0580b6c27f82"
 
 [[package]]
 name = "either"
@@ -919,6 +934,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4a1e36c821dbe04574f602848a19f742f4fb3c98d40449f11bcad18d6b17421"
 
 [[package]]
+name = "humantime"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
+
+[[package]]
 name = "hyper"
 version = "0.14.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1013,9 +1034,9 @@ dependencies = [
 
 [[package]]
 name = "inventory"
-version = "0.2.3"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84344c6e0b90a9e2b6f3f9abe5cc74402684e348df7b32adca28747e0cef091a"
+checksum = "30a61b8101d87996f82d725ba701b1987b7afc72f481c13513a30b855b9c9133"
 dependencies = [
  "ctor",
  "ghost",
@@ -1219,9 +1240,6 @@ name = "once_cell"
 version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2f7254b99e31cad77da24b08ebf628882739a608578bb1bcdfc1f9c21260d7c0"
-dependencies = [
- "parking_lot_core",
-]
 
 [[package]]
 name = "opaque-debug"
@@ -1285,19 +1303,6 @@ name = "parking"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "427c3892f9e783d91cc128285287e70a59e206ca452770ece88a76f7a3eddd72"
-
-[[package]]
-name = "parking_lot_core"
-version = "0.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09a279cbf25cb0757810394fbc1e359949b59e348145c643a939a525692e6929"
-dependencies = [
- "cfg-if",
- "libc",
- "redox_syscall",
- "smallvec",
- "windows-sys",
-]
 
 [[package]]
 name = "path-absolutize"
