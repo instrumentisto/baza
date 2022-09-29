@@ -87,6 +87,14 @@ spec:
         - name: {{ printf "%s.nginx.registry" (include "baza.fullname" .) | quote }}
       {{- end }}
     {{- end }}
+      initContainers:
+        - name: chown
+          image: alpine:latest
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          command: ["chown", "-R", "65534:65534", "/var/lib/baza"]
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/baza/
       containers:
         - name: baza
           image: {{ printf "%s:%s" .Values.image.repository .Values.image.tag | quote }}
