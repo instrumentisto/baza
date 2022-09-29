@@ -7,9 +7,11 @@ Baza can be accessed via these URLs inside your cluster:
 {{- if .Values.ingress.enabled }}{{ "\n" }}
 Baza can be accessed via these URLs outside your cluster:
 {{- range .Values.ingress.hosts }}
-{{- if $.Values.nginx.enabled }}
-  Nginx:  http{{ if $.Values.ingress.tls.enabled }}s{{ end }}://{{ . }}{{ $.Values.ingress.subPath | trimSuffix "/" }}/
+{{- if and $.Values.nginx.enabled $.Values.ingress.paths.http }}
+  Nginx:  http{{ if $.Values.ingress.tls.enabled }}s{{ end }}://{{ . }}{{ $.Values.ingress.paths.http | trimSuffix "/" }}/
 {{- end }}
-  S3 API: http{{ if $.Values.ingress.tls.enabled }}s{{ end }}://{{ . }}{{ $.Values.ingress.subPath | trimSuffix "/" }}/s3/
+{{- if $.Values.ingress.paths.s3 }}
+  S3 API: http{{ if $.Values.ingress.tls.enabled }}s{{ end }}://{{ . }}{{ $.Values.ingress.paths.s3 | trimSuffix "/" }}/
+{{- end }}
 {{- end }}
 {{- end }}

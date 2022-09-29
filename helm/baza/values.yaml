@@ -102,10 +102,13 @@ ingress:
   hosts:
     - baza.test
 
-  # Optional URL sub-path to prepend `Ingress` endpoints with.
-  # Baza S3 API will be available under `<subPath>/s3/`.
-  # Nginx (if enabled) will be available under `<subPath>/`.
-  subPath: ""  # /baza/
+  # URL paths of available `Ingress` endpoints.
+  # Empty value disables endpoint.
+  paths:
+    # Baza S3 API endpoint.
+    s3: /s3/
+    # Nginx HTTP endpoint (absent if `nginx.enabled` is `no`).
+    http: /
 
   tls:
     enabled: no
