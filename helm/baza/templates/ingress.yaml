@@ -26,6 +26,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
+{{- with $.Values.ingress.className }}
+  ingressClassName: {{ . | quote }}
+{{- end }}
   rules:
   {{- range $h := list $host (printf "www.%s" $host) }}
     - host: {{ $h | quote }}

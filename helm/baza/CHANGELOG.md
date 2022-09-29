@@ -6,6 +6,16 @@ All user visible changes to this project will be documented in this file. This p
 
 
 
+## [0.4.0] · 2022-09-??
+[0.4.0]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.4.0/helm/baza
+
+### Added
+
+- Optional `ingress.className` value.
+
+
+
+
 ## [0.3.0] · 2022-09-12
 [0.3.0]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.3.0/helm/baza
 

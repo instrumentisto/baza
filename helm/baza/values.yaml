@@ -113,6 +113,8 @@ ingress:
     secretName:  # not required when `auto: yes`
       baza.test: baza.test.tls
 
+  className: ""
+
   annotations:
     kubernetes.io/ingress.class: nginx
 
