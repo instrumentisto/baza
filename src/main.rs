@@ -28,36 +28,27 @@ async fn main() -> Result<(), String> {
 
 /// CLI options.
 #[derive(Debug, clap::Parser)]
+#[command(about)]
 struct CliOpts {
     /// Directory where all buckets will be stored.
-    #[clap(short, long, parse(from_os_str), default_value = "/var/lib/baza")]
+    #[arg(short, long, default_value = "/var/lib/baza")]
     root: PathBuf,
 
     /// Logging verbosity level.
     ///
     /// Available values: `error`, `warn`, `info`, `debug`, `trace`.
-    #[clap(short, long, parse(try_from_str), default_value = "info")]
+    #[arg(short, long, default_value = "info")]
     log_level: Level,
 
     /// Port to run S3 HTTP API on.
-    #[clap(short, long, default_value_t = 9294)]
+    #[arg(short, long, default_value_t = 9294)]
     port: u16,
 
     /// S3 API access key.
-    #[clap(
-        long,
-        parse(try_from_str),
-        env = "BAZA_ACCESS_KEY",
-        default_value = "baza"
-    )]
+    #[arg(long, env = "BAZA_ACCESS_KEY", default_value = "baza")]
     access_key: SecretString,
 
     /// S3 API secret key.
-    #[clap(
-        long,
-        parse(try_from_str),
-        env = "BAZA_SECRET_KEY",
-        default_value = "baza"
-    )]
+    #[arg(long, env = "BAZA_SECRET_KEY", default_value = "baza")]
     secret_key: SecretString,
 }
