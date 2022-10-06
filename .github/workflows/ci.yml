@@ -34,7 +34,8 @@ jobs:
       - helm-lint
       - rustdoc
       - rustfmt
-      - test-e2e
+      - test-e2e-debug
+      - test-e2e-release
       - test-unit
     runs-on: ubuntu-latest
     steps:
@@ -64,7 +65,7 @@ jobs:
       - run: make cargo.lint
 
   helm-lint:
-    name: Lint Helm chart
+    name: lint Helm chart
     if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
     strategy:
       fail-fast: false
@@ -97,8 +98,35 @@ jobs:
   # Testing #
   ###########
 
-  test-e2e:
-    name: E2E tests
+  test-e2e-debug:  # as a separate CI job to omit waiting `docker` CI job
+    name: test E2E (debug)
+    if: ${{ !startsWith(github.ref, 'refs/tags/helm/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          components: rust-src
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ env.RUST_VER }}
+          override: true
+      - uses: Swatinem/rust-cache@v1
+        if: ${{ env.CACHE == 'true' }}
+
+      - run: cargo install cargo-careful
+
+      - run: make up background=yes dockerized=no
+                     debug=yes careful=yes
+      - run: sleep 5
+
+      - run: make test.e2e start-app=no
+
+  test-e2e-release:
+    name: test E2E (release)
     if: ${{ !startsWith(github.ref, 'refs/tags/helm/') }}
     needs: ["docker"]
     runs-on: ubuntu-latest
@@ -113,8 +141,8 @@ jobs:
         if: ${{ env.CACHE == 'true' }}
       - uses: satackey/action-docker-layer-caching@v0.0.11
         with:
-          key: test-e2e-{hash}
-          restore-keys: test-e2e-
+          key: test-e2e-release-{hash}
+          restore-keys: test-e2e-release-
         continue-on-error: true
         timeout-minutes: 10
         if: ${{ env.CACHE == 'true' }}
@@ -125,24 +153,38 @@ jobs:
           path: .cache/docker/
       - run: make docker.untar
 
-      - run: make test.e2e start-app=yes dockerized=yes
-                  tag=build-${{ github.run_number }}
+      - run: make up background=yes dockerized=yes
+                     tag=build-${{ github.run_number }}
+      - run: sleep 5
+
+      - run: make test.e2e start-app=no
 
   test-unit:
-    name: Unit tests
+    name: test unit
     if: ${{ !startsWith(github.ref, 'refs/tags/helm/') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain: ["stable", "nightly"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ env.RUST_VER }}
+          toolchain: ${{ (matrix.toolchain == 'stable' && env.RUST_VER)
+                      ||                                  matrix.toolchain }}
+          components: rust-src
           override: true
       - uses: Swatinem/rust-cache@v1
         if: ${{ env.CACHE == 'true' }}
 
+      - run: cargo install cargo-careful
+        if: ${{ matrix.toolchain == 'nightly' }}
+
       - run: make test.unit
+                  careful=${{ (matrix.toolchain == 'nightly' && 'yes')
+                           ||                                   'no' }}
 
 
 
@@ -194,11 +236,11 @@ jobs:
   #############
 
   release-docker:
-    name: Release Docker image
+    name: release Docker image
     if: ${{ github.event_name == 'push'
          && (github.ref == 'refs/heads/main'
              || startsWith(github.ref, 'refs/tags/v')) }}
-    needs: ["docker", "test-e2e"]
+    needs: ["docker", "test-e2e-release"]
     strategy:
       fail-fast: false
       matrix:
@@ -306,14 +348,15 @@ jobs:
              && matrix.registry == 'quay.io' }}
 
   release-github:
-    name: Release on GitHub
+    name: release on GitHub
     if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     needs:
       - clippy
       - release-docker
       - rustdoc
       - rustfmt
-      - test-e2e
+      - test-e2e-debug
+      - test-e2e-release
       - test-unit
     runs-on: ubuntu-latest
     steps:
@@ -349,7 +392,7 @@ jobs:
           prerelease: ${{ contains(steps.semver.outputs.group1, '-') }}
 
   release-helm:
-    name: Release Helm chart
+    name: release Helm chart
     if: ${{ startsWith(github.ref, 'refs/tags/helm/') }}
     needs: ["helm-lint"]
     strategy:

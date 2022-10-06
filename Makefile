@@ -75,7 +75,7 @@ endif
 # Usage:
 #	make up [background=(no|yes)]
 #	        [debug=(yes|no)]
-#	        [( [dockerized=no]
+#	        [( [dockerized=no] [careful=(no|yes)]
 #	         | dockerized=yes [tag=(dev|<docker-tag>)]
 #	           [( [rebuild=no] | rebuild=yes [no-cache=(no|yes)] )] )]
 
@@ -91,7 +91,23 @@ endif
 	           -v "$(PWD)/.cache/baza/":/.cache/baza/:z \
 		$(OWNER)/$(NAME):$(or $(tag),dev) -r .cache/baza
 else
-	cargo run $(if $(call eq,$(debug),no),--release,) -- -r .cache/baza \
+ifneq ($(debug),no)
+ifeq ($(careful),yes)
+ifeq ($(shell cargo install --list | grep cargo-careful),)
+	cargo install cargo-careful
+endif
+ifeq ($(shell rustup component list --toolchain=nightly \
+              | grep 'rust-src (installed)'),)
+	rustup component add --toolchain=nightly rust-src
+endif
+endif
+endif
+ifeq ($(background),yes)
+	cargo $(if $(call eq,$(careful),yes),+nightly careful,) run \
+		$(if $(call eq,$(debug),no),--release,) -- --help > /dev/null
+endif
+	cargo $(if $(call eq,$(careful),yes),+nightly careful,) run \
+		$(if $(call eq,$(debug),no),--release,) -- -r .cache/baza \
 		$(if $(call eq,$(background),yes),&,)
 endif
 
@@ -150,14 +166,14 @@ cargo.lint:
 #	make test.e2e [only=<regex>]
 #	              [( [start-app=no]
 #	               | start-app=yes [debug=(yes|no)]
-#	                 [( [dockerized=no]
+#	                 [( [dockerized=no] [careful=(no|yes)]
 #	                    | dockerized=yes [tag=(dev|<docker-tag>)]
 #	                      [( [rebuild=no] |
 #	                         rebuild=yes [no-cache=(no|yes)] )] )] )]
 
 test.e2e:
 ifeq ($(start-app),yes)
-	@make up background=yes debug=$(debug) \
+	@make up background=yes debug=$(debug) careful=$(careful) \
 	         dockerized=$(dockerized) tag=$(tag) \
 	         rebuild=$(rebuild) no-cache=$(no-cache)
 	sleep 5
@@ -172,10 +188,19 @@ endif
 # Run project unit tests.
 #
 # Usage:
-#	make test.unit [crate=<crate-name>]
+#	make test.unit [crate=<crate-name>] [careful=(no|yes)]
 
 test.unit:
-	cargo test \
+ifeq ($(careful),yes)
+ifeq ($(shell cargo install --list | grep cargo-careful),)
+	cargo install cargo-careful
+endif
+ifeq ($(shell rustup component list --toolchain=nightly \
+              | grep 'rust-src (installed)'),)
+	rustup component add --toolchain=nightly rust-src
+endif
+endif
+	cargo $(if $(call eq,$(careful),yes),+nightly careful,) test \
 		$(if $(call eq,$(crate),),--workspace --exclude baza-e2e,-p $(crate)) \
 		--all-features
 
