@@ -448,9 +448,9 @@ dependencies = [
 
 [[package]]
 name = "cucumber"
-version = "0.15.0"
+version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce011cdaddaa77e3fcf6a6aaa6c0c92b8d9501cf156aacfd311fd80741663cc8"
+checksum = "eebe93e26e4544e05138ee893ba49ee08e5e7d27d297b716eaedcc8bfc91b0e0"
 dependencies = [
  "anyhow",
  "async-trait",
