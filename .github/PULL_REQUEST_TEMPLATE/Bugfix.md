@@ -1,18 +1,18 @@
-Resolves <paste issue reference>
+Resolves <!-- paste issue reference -->
 
 
 
 
 ## Synopsis
 
-<Give a brief overview of the problem>
+<!-- Give a brief overview of the problem. -->
 
 
 
 
 ## Solution
 
-<Describe how exactly the problem is (or will be) resolved>
+<!-- Describe how exactly the problem is (or will be) resolved. -->
 
 
 
@@ -23,6 +23,7 @@ Resolves <paste issue reference>
     - [ ] In [draft mode][l:1]
     - [ ] Name contains issue reference
     - [ ] Has type and `k::` labels applied
+    - [ ] Has assignee
 - Before [review][l:4]:
     - [ ] Documentation is updated (if required)
     - [ ] Tests are updated (if required)

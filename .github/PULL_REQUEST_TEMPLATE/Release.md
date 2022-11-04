@@ -1,4 +1,4 @@
-Prepares [<paste release version>](<paste milestone link>) release.
+Prepares [<!-- paste release version -->](<!-- paste milestone link -->) release.
 
 
 
@@ -8,8 +8,8 @@ Prepares [<paste release version>](<paste milestone link>) release.
 - Created PR:
     - [ ] In [draft mode][l:1]
     - [ ] Name contains issue reference
-    - [ ] Name contains milestone reference
     - [ ] Has type and `k::` labels applied
+    - [ ] Has assignee
 - Before [review][l:4]:
     - [ ] Documentation is updated (if required)
     - [ ] Tests are updated (if required)
