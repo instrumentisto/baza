@@ -53,19 +53,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: ${{ env.RUST_VER }}
-          override: true
           components: clippy
+      - run: rustup default ${{ env.RUST_VER }}
       - uses: Swatinem/rust-cache@v1
         if: ${{ env.CACHE == 'true' }}
 
       - run: make cargo.lint
 
   helm-lint:
-    name: lint Helm chart
+    name: helm lint
     if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
     strategy:
       fail-fast: false
@@ -83,9 +82,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: nightly
           components: rustfmt
 
@@ -104,16 +102,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@v1
         with:
-          profile: minimal
+          toolchain: ${{ env.RUST_VER }}
+      - run: rustup default ${{ env.RUST_VER }}
+      - uses: dtolnay/rust-toolchain@v1
+        with:
           toolchain: nightly
           components: rust-src
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ env.RUST_VER }}
-          override: true
       - uses: Swatinem/rust-cache@v1
         if: ${{ env.CACHE == 'true' }}
 
@@ -132,11 +128,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: ${{ env.RUST_VER }}
-          override: true
+      - run: rustup default ${{ env.RUST_VER }}
       - uses: Swatinem/rust-cache@v1
         if: ${{ env.CACHE == 'true' }}
       - uses: satackey/action-docker-layer-caching@v0.0.11
@@ -169,13 +164,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: ${{ (matrix.toolchain == 'stable' && env.RUST_VER)
                       ||                                  matrix.toolchain }}
           components: rust-src
-          override: true
+      - run: rustup default
+                    ${{ (matrix.toolchain == 'stable' && env.RUST_VER)
+                     ||                                  matrix.toolchain }}
       - uses: Swatinem/rust-cache@v1
         if: ${{ env.CACHE == 'true' }}
 
@@ -218,11 +214,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: ${{ env.RUST_VER }}
-          override: true
+      - run: rustup default ${{ env.RUST_VER }}
       - uses: Swatinem/rust-cache@v1
         if: ${{ env.CACHE == 'true' }}
 
@@ -235,8 +230,8 @@ jobs:
   # Releasing #
   #############
 
-  release-docker:
-    name: release Docker image
+  docker-push:
+    name: docker push
     if: ${{ github.event_name == 'push'
          && (github.ref == 'refs/heads/main'
              || startsWith(github.ref, 'refs/tags/v')) }}
@@ -352,7 +347,7 @@ jobs:
     if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     needs:
       - clippy
-      - release-docker
+      - docker-push
       - rustdoc
       - rustfmt
       - test-e2e-debug
