@@ -58,7 +58,7 @@ jobs:
           toolchain: ${{ env.RUST_VER }}
           components: clippy
       - run: rustup default ${{ env.RUST_VER }}
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
         if: ${{ env.CACHE == 'true' }}
 
       - run: make cargo.lint
@@ -110,7 +110,7 @@ jobs:
         with:
           toolchain: nightly
           components: rust-src
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
         if: ${{ env.CACHE == 'true' }}
 
       - run: cargo install cargo-careful
@@ -132,7 +132,7 @@ jobs:
         with:
           toolchain: ${{ env.RUST_VER }}
       - run: rustup default ${{ env.RUST_VER }}
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
         if: ${{ env.CACHE == 'true' }}
       - uses: satackey/action-docker-layer-caching@v0.0.11
         with:
@@ -172,7 +172,7 @@ jobs:
       - run: rustup default
                     ${{ (matrix.toolchain == 'stable' && env.RUST_VER)
                      ||                                  matrix.toolchain }}
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
         if: ${{ env.CACHE == 'true' }}
 
       - run: cargo install cargo-careful
@@ -218,7 +218,7 @@ jobs:
         with:
           toolchain: ${{ env.RUST_VER }}
       - run: rustup default ${{ env.RUST_VER }}
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
         if: ${{ env.CACHE == 'true' }}
 
       - run: make cargo.doc private=yes open=no
