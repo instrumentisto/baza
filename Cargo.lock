@@ -470,9 +470,9 @@ dependencies = [
 
 [[package]]
 name = "cucumber"
-version = "0.16.0"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6615c182e3741b8a4d0d168ad3e8fd0ea17701d62d2ef6b09f87b3ad398eb15"
+checksum = "24f3e7fc780b1bc0dc3b60e06d0e43d0fc2ed8ba6a854cf756764bcfc33aaab8"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -500,9 +500,9 @@ dependencies = [
 
 [[package]]
 name = "cucumber-codegen"
-version = "0.16.0"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee4c2abf1b117f1163bdb31e428ca0ce71553c34f460e694ffea50aa0261ecaf"
+checksum = "9b71f72539be877c7a0ed7464ac94936f5369ee8b9033439a0fed2103af5508f"
 dependencies = [
  "cucumber-expressions",
  "inflections",
