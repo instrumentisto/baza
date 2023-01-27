@@ -1,5 +1,8 @@
 //! S3 HTTP API implementation of Baza.
 
+// TODO: Remove on next `derive_more` major version upgrade.
+#![allow(clippy::uninlined_format_args)]
+
 use std::{
     convert::Infallible,
     fmt, io,
