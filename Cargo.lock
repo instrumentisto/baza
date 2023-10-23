@@ -525,9 +525,9 @@ dependencies = [
 
 [[package]]
 name = "cucumber"
-version = "0.20.0"
+version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ead33440b8c33da870588443d745a0f23de153013fe847ae71073d176f75293"
+checksum = "08c1c99a359eddd550cbe157e9d8be68f4ba5fb48a668ca6702e82c3503770ef"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -557,9 +557,9 @@ dependencies = [
 
 [[package]]
 name = "cucumber-codegen"
-version = "0.20.0"
+version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a8e4a7c46b4b5c81894087a5e3a95138bdd26e2e46fcca258513e07b880a369"
+checksum = "eec3b6ad01b305d2ddc5e48eb4e31c5d79b1cd2807ee870b7711c895d2b57434"
 dependencies = [
  "cucumber-expressions",
  "inflections",
@@ -894,16 +894,16 @@ dependencies = [
 
 [[package]]
 name = "gherkin"
-version = "0.13.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e8f8f49b2b547ec22cc4d99f3bf30d4889ef0dbaa231c0736eeaf20efb5a38e"
+checksum = "20b79820c0df536d1f3a089a2fa958f61cb96ce9e0f3f8f507f5a31179567755"
 dependencies = [
  "heck 0.4.1",
  "peg",
  "quote",
  "serde",
  "serde_json",
- "syn 1.0.109",
+ "syn 2.0.25",
  "textwrap",
  "thiserror",
  "typed-builder",
@@ -2530,13 +2530,22 @@ checksum = "3528ecfd12c466c6f163363caf2d02a71161dd5e1cc6ae7b34207ea2d42d81ed"
 
 [[package]]
 name = "typed-builder"
-version = "0.10.0"
+version = "0.15.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89851716b67b937e393b3daa8423e67ddfc4bbbf1654bcf05488e95e0828db0c"
+checksum = "7fe83c85a85875e8c4cb9ce4a890f05b23d38cd0d47647db7895d3d2a79566d2"
+dependencies = [
+ "typed-builder-macro",
+]
+
+[[package]]
+name = "typed-builder-macro"
+version = "0.15.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "29a3151c41d0b13e3d011f98adc24434560ef06673a155a6c7f66b9879eecce2"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 1.0.109",
+ "syn 2.0.25",
 ]
 
 [[package]]
