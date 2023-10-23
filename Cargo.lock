@@ -133,6 +133,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-fs"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19d819821687ae85eb078f61de86893e6b09e1ecb32e8cd9a36a03f00cac42d6"
+dependencies = [
+ "async-lock",
+ "blocking",
+ "futures-lite",
+]
+
+[[package]]
 name = "async-lock"
 version = "2.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -218,7 +229,7 @@ dependencies = [
 name = "baza-e2e"
 version = "0.0.0"
 dependencies = [
- "async-fs",
+ "async-fs 2.0.0",
  "baza-api-s3",
  "baza-lib",
  "cucumber",
@@ -234,7 +245,7 @@ dependencies = [
 name = "baza-lib"
 version = "0.0.0"
 dependencies = [
- "async-fs",
+ "async-fs 2.0.0",
  "async-trait",
  "derive_more",
  "futures",
@@ -1944,7 +1955,7 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6d631a04555d2450ff36691d504a8229d04db8492d8a2cace3e999849fa4afa"
 dependencies = [
- "async-fs",
+ "async-fs 1.6.0",
  "async-trait",
  "backtrace",
  "base64",
