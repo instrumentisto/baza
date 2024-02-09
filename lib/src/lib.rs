@@ -115,6 +115,7 @@ where
     type Ok = ();
     type Err = Traced<io::Error>;
 
+    #[allow(clippy::blocks_in_conditions)] // due to `instrument` attribute
     #[tracing::instrument(level = "debug", err(Debug))]
     async fn exec(&self, op: CreateFile<S>) -> Result<Self::Ok, Self::Err> {
         let path = self.data_dir.join(op.path);
@@ -152,6 +153,7 @@ impl Exec<CreateSymlink> for Storage {
     type Ok = ();
     type Err = Traced<io::Error>;
 
+    #[allow(clippy::blocks_in_conditions)] // due to `instrument` attribute
     #[tracing::instrument(level = "debug", err(Debug))]
     async fn exec(&self, op: CreateSymlink) -> Result<Self::Ok, Self::Err> {
         let dest = self.data_dir.join(op.dest);
@@ -192,6 +194,7 @@ impl Exec<GetFile> for Storage {
     type Ok = Option<ReadOnlyFile>;
     type Err = Traced<io::Error>;
 
+    #[allow(clippy::blocks_in_conditions)] // due to `instrument` attribute
     #[tracing::instrument(level = "debug", err(Debug))]
     async fn exec(&self, op: GetFile) -> Result<Self::Ok, Self::Err> {
         let path = self.data_dir.join(op.path);
