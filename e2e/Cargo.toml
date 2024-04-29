@@ -9,7 +9,7 @@ license = "BlueOak-1.0.0"
 publish = false
 
 [dev-dependencies]
-async-fs = "2.0"
+async-fs = "2.1"
 baza = { package = "baza-lib", path = "../lib" }
 baza-api-s3 = { path = "../api/s3" }
 cucumber = { version = "0.21", features = ["libtest"] }
