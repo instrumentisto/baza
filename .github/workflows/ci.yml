@@ -18,7 +18,7 @@ env:
           && !startsWith(github.ref, 'refs/tags/v')
           && !contains(github.event.head_commit.message, '[fresh ci]') }}
   RUST_BACKTRACE: 1
-  RUST_VER: "1.77"
+  RUST_VER: "1.78"
 
 jobs:
 

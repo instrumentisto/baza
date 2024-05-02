@@ -2,7 +2,7 @@
 name = "baza-e2e"
 version = "0.0.0"
 edition = "2021"
-rust-version = "1.62"
+rust-version = "1.70"
 description = "E2E (end-to-end) tests of this project."
 authors = ["Instrumentisto Team <developer@instrumentisto.com>"]
 license = "BlueOak-1.0.0"

@@ -2,7 +2,7 @@
 name = "baza-api-s3"
 version = "0.0.0"
 edition = "2021"
-rust-version = "1.62"
+rust-version = "1.70"
 description = "S3 HTTP API implementation of Baza."
 authors = ["Instrumentisto Team <developer@instrumentisto.com>"]
 license = "BlueOak-1.0.0"
