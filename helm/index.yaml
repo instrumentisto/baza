@@ -3,7 +3,19 @@ entries:
   baza:
   - apiVersion: v2
     appVersion: "0.2"
-    created: "2022-09-29T14:08:01.089608154Z"
+    created: "2024-07-16T09:53:26.385694996Z"
+    description: Simply scalable files storage without much fuss.
+    digest: 364299acef28f071c0c0880d84605a9f1a25b17440fea9f1e132073ae7d7656f
+    name: baza
+    sources:
+    - https://github.com/instrumetisto/baza
+    type: application
+    urls:
+    - https://instrumentisto.github.io/baza/helm/baza-0.4.1.tgz
+    version: 0.4.1
+  - apiVersion: v2
+    appVersion: "0.2"
+    created: "2024-07-16T09:53:26.385248025Z"
     description: Simply scalable files storage without much fuss.
     digest: 01b7361691adeaaff7d94161b6437006cf1c122a0c7bded9068318eb1d2d4b04
     name: baza
@@ -15,7 +27,7 @@ entries:
     version: 0.4.0
   - apiVersion: v2
     appVersion: "0.2"
-    created: "2022-09-29T14:08:01.088809849Z"
+    created: "2024-07-16T09:53:26.384781127Z"
     description: Simply scalable files storage without much fuss.
     digest: 58bef452fd6c051392022994dbdf757b5a363c26a24a01daf56634d475367e82
     name: baza
@@ -27,7 +39,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: "0.2"
-    created: "2022-09-29T14:08:01.087993143Z"
+    created: "2024-07-16T09:53:26.384350838Z"
     description: Simply scalable files storage without much fuss.
     digest: 06d512b8e7dfd03e53522441801749338e992ef6e9216d944fccb21ee73fe1a1
     name: baza
@@ -39,7 +51,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: "0.2"
-    created: "2022-09-29T14:08:01.087115237Z"
+    created: "2024-07-16T09:53:26.383888379Z"
     description: Simply scalable files storage without much fuss.
     digest: 41a7dc86a598b7a36604a13f7f15505dc4c0048b80582ef24570f85135eb2a09
     name: baza
@@ -51,7 +63,7 @@ entries:
     version: 0.1.1
   - apiVersion: v2
     appVersion: "0.1"
-    created: "2022-09-29T14:08:01.086398831Z"
+    created: "2024-07-16T09:53:26.383088353Z"
     description: Simply scalable files storage without much fuss.
     digest: 02f35d087163b193e96eb903b9973b856d773eaae003ec298f42be381cc66998
     name: baza
@@ -61,4 +73,4 @@ entries:
     urls:
     - https://instrumentisto.github.io/baza/helm/baza-0.1.0.tgz
     version: 0.1.0
-generated: "2022-09-29T14:08:01.085197323Z"
+generated: "2024-07-16T09:53:26.381711674Z"
