@@ -6,6 +6,18 @@ All user visible changes to this project will be documented in this file. This p
 
 
 
+## [0.4.1] · 2024-07-16
+[0.4.1]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.4.1/helm/baza
+
+### Fixed
+
+- Incorrect labels of registry `Secret`. ([#194])
+
+[#194]: https://github.com/instrumentisto/baza/pull/194
+
+
+
+
 ## [0.4.0] · 2022-09-29
 [0.4.0]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.4.0/helm/baza
 
