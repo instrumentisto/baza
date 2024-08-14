@@ -1,14 +1,12 @@
 //! S3 HTTP API implementation of Baza.
 
-// TODO: Remove on next `derive_more` major version upgrade.
-#![allow(clippy::uninlined_format_args)]
-
 use std::{
     convert::Infallible,
     fmt, io,
     net::{TcpListener, ToSocketAddrs},
 };
 
+use derive_more::{Display, Error, From};
 use hyper::{server::Server, service::make_service_fn};
 use s3_server::{
     dto,
@@ -19,11 +17,8 @@ use secrecy::{ExposeSecret as _, SecretString};
 use tokio_util::{compat::FuturesAsyncReadCompatExt as _, io::ReaderStream};
 
 use baza::{
-    async_trait,
-    derive_more::{Display, Error, From},
-    futures::future,
-    tracing, CreateFile, CreateSymlink, Exec, GetFile, ReadOnlyFile,
-    RelativePath,
+    async_trait, futures::future, tracing, CreateFile, CreateSymlink, Exec,
+    GetFile, ReadOnlyFile, RelativePath,
 };
 
 /// [`dto::PutObjectRequest::metadata`] key where [`CreateSymlink::src`] is
@@ -67,11 +62,11 @@ where
 #[derive(Debug, Display, Error, From)]
 pub enum RunHttpServerError {
     /// Failed to bind address.
-    #[display(fmt = "Failed to bind address: {}", _0)]
+    #[display("Failed to bind address: {_0}")]
     BindAddress(io::Error),
 
     /// [`hyper`] server failure.
-    #[display(fmt = "Hyper server failed: {}", _0)]
+    #[display("Hyper server failed: {_0}")]
     Hyper(hyper::Error),
 }
 

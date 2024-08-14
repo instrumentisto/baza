@@ -2,7 +2,7 @@
 name = "baza-lib"
 version = "0.0.0"
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.75"
 description = "Actual Baza implementation as library."
 authors = ["Instrumentisto Team <developer@instrumentisto.com>"]
 license = "BlueOak-1.0.0"
@@ -11,7 +11,7 @@ publish = false
 [dependencies]
 async-fs = "2.1"
 async-trait = "0.1"
-derive_more = "0.99"
+derive_more = { version = "1", features = ["display", "error"] }
 futures = "0.3"
 tracerr = "0.3"
 tracing = "0.1"
