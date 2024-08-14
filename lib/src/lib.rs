@@ -12,7 +12,6 @@ use tracerr::Traced;
 use uuid::Uuid;
 
 pub use async_trait::async_trait;
-pub use derive_more;
 pub use futures;
 pub use tracing;
 
@@ -264,7 +263,7 @@ impl TryFrom<String> for RelativePath {
 
 /// Error of parsing [`RelativePath`] from a [`String`].
 #[derive(Debug, Display, Error)]
-#[display(fmt = "Invalid `RelativePath` format")]
+#[display("Invalid `RelativePath` format")]
 pub struct InvalidRelativePathError;
 
 #[cfg(test)]
