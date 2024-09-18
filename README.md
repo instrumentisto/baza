@@ -2,7 +2,7 @@ Baza
 ====
 
 [![CI](https://github.com/instrumentisto/baza/workflows/CI/badge.svg?branch=main "CI")](https://github.com/instrumentisto/baza/actions?query=workflow%3ACI+branch%3Amain)
-[![Rust 1.75+](https://img.shields.io/badge/rustc-1.75+-lightgray.svg "Rust 1.75+")](https://blog.rust-lang.org/2023/12/28/Rust-1.75.0.html)
+[![Rust 1.81+](https://img.shields.io/badge/rustc-1.81+-lightgray.svg "Rust 1.81+")](https://blog.rust-lang.org/2024/09/05/Rust-1.81.0.html)
 
 [Docker Hub](https://hub.docker.com/r/instrumentisto/baza)
 | [GitHub Container Registry](https://github.com/orgs/instrumentisto/packages/container/package/baza)

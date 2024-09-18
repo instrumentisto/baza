@@ -5,9 +5,9 @@ mod s3;
 use std::{
     collections::{HashMap, HashSet},
     fs,
+    sync::LazyLock,
 };
 
-use once_cell::sync::Lazy;
 use rand::{distributions::Alphanumeric, thread_rng, Rng as _};
 
 use baza::futures::TryStreamExt as _;
@@ -70,7 +70,7 @@ async fn clear_data_dir() -> Result<(), String> {
 /// Reads the `samples/` directory, memoizes sample files, and returns the
 /// requested `sample`.
 fn sample_file(sample: impl AsRef<str>) -> &'static [u8] {
-    static SAMPLES: Lazy<HashMap<String, Vec<u8>>> = Lazy::new(|| {
+    static SAMPLES: LazyLock<HashMap<String, Vec<u8>>> = LazyLock::new(|| {
         fs::read_dir("samples")
             .expect("Samples directory is missing")
             .map(|e| {
