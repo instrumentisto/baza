@@ -42,8 +42,8 @@ where
 {
     let mut auth = SimpleAuth::new();
     auth.register(
-        access_key.expose_secret().clone(),
-        secret_key.expose_secret().clone(),
+        access_key.expose_secret().to_owned(),
+        secret_key.expose_secret().to_owned(),
     );
 
     let mut s3 = S3Service::new(S3(storage));
