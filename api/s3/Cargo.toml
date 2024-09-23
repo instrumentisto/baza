@@ -13,5 +13,5 @@ baza = { package = "baza-lib", path = "../../lib" }
 derive_more = { version = "1", features = ["display", "error", "from"] }
 hyper = "0.14"
 s3-server = "0.2"
-secrecy = "0.8"
+secrecy = "0.10"
 tokio-util = { version = "0.7", features = ["io", "compat"] }
