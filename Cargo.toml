@@ -20,7 +20,7 @@ split-debuginfo = "unpacked"
 baza = { package = "baza-lib", path = "lib" }
 baza-api-s3 = { path = "api/s3" }
 clap = { version = "4", features = ["derive", "env", "wrap_help"] }
-secrecy = "0.8"
+secrecy = "0.10"
 tokio = "1"
 tracing-subscriber = "0.3"
 
