@@ -8,7 +8,7 @@ use std::{
     sync::LazyLock,
 };
 
-use rand::{distributions::Alphanumeric, thread_rng, Rng as _};
+use rand::{distr::Alphanumeric, Rng as _};
 
 use baza::futures::TryStreamExt as _;
 
@@ -101,7 +101,7 @@ struct Unique(String);
 impl Default for Unique {
     fn default() -> Self {
         Self(
-            thread_rng()
+            rand::rng()
                 .sample_iter(&Alphanumeric)
                 .take(10)
                 .map(|n| char::from(n).to_ascii_lowercase())
