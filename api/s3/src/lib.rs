@@ -6,7 +6,7 @@ use std::{
     net::{TcpListener, ToSocketAddrs},
 };
 
-use derive_more::{Display, Error, From};
+use derive_more::with_trait::{Display, Error, From};
 use hyper::{server::Server, service::make_service_fn};
 use s3_server::{
     dto,
