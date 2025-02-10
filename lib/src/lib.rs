@@ -6,7 +6,7 @@ use std::{
 };
 
 use async_fs::File;
-use derive_more::{Display, Error};
+use derive_more::with_trait::{Display, Error};
 use futures::{pin_mut, AsyncRead, AsyncWriteExt as _, Stream, StreamExt as _};
 use tracerr::Traced;
 use uuid::Uuid;
