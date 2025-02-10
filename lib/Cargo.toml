@@ -13,6 +13,6 @@ async-fs = "2.1"
 async-trait = "0.1"
 derive_more = { version = "1", features = ["display", "error"] }
 futures = "0.3"
-tracerr = "0.3"
+tracerr = "0.4"
 tracing = "0.1"
 uuid = { version = "1", features = ["v4"] }
