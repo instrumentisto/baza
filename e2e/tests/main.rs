@@ -8,9 +8,8 @@ use std::{
     sync::LazyLock,
 };
 
-use rand::{distr::Alphanumeric, Rng as _};
-
 use baza::futures::TryStreamExt as _;
+use rand::{Rng as _, distr::Alphanumeric};
 
 /// Path to the directory where files are stored during E2E tests running.
 const DATA_DIR: &str = "../.cache/baza/data";

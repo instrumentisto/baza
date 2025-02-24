@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use baza::{tracing::Level, Storage};
+use baza::{Storage, tracing::Level};
 use baza_api_s3 as s3;
 use secrecy::SecretString;
 
@@ -8,9 +8,7 @@ use secrecy::SecretString;
 async fn main() -> Result<(), String> {
     let args = <CliOpts as clap::Parser>::parse();
 
-    tracing_subscriber::fmt()
-        .with_max_level(args.log_level)
-        .init();
+    tracing_subscriber::fmt().with_max_level(args.log_level).init();
 
     let storage = Storage::new(args.root).await.map_err(|e| {
         format!("Failed to initialize `Storage`: {e}: {}", e.trace())

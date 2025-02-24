@@ -6,20 +6,18 @@ use std::{
     net::{TcpListener, ToSocketAddrs},
 };
 
+use baza::{
+    CreateFile, CreateSymlink, Exec, GetFile, ReadOnlyFile, RelativePath,
+    async_trait, futures::future, tracing,
+};
 use derive_more::with_trait::{Display, Error, From};
 use hyper::{server::Server, service::make_service_fn};
 use s3_server::{
-    dto,
+    S3Service, S3Storage, SimpleAuth, dto,
     errors::{S3Error, S3ErrorCode, S3StorageError, S3StorageResult},
-    S3Service, S3Storage, SimpleAuth,
 };
 use secrecy::{ExposeSecret as _, SecretString};
 use tokio_util::{compat::FuturesAsyncReadCompatExt as _, io::ReaderStream};
-
-use baza::{
-    async_trait, futures::future, tracing, CreateFile, CreateSymlink, Exec,
-    GetFile, ReadOnlyFile, RelativePath,
-};
 
 /// [`dto::PutObjectRequest::metadata`] key where [`CreateSymlink::src`] is
 /// expected to be provided.
@@ -228,9 +226,8 @@ where
     ) -> S3StorageResult<dto::PutObjectOutput, dto::PutObjectError> {
         let path = parse_s3_path(input.bucket, input.key)?;
 
-        if let Some(original) = input
-            .metadata
-            .and_then(|mut meta| meta.remove(SYMLINK_META_KEY))
+        if let Some(original) =
+            input.metadata.and_then(|mut meta| meta.remove(SYMLINK_META_KEY))
         {
             let op = CreateSymlink {
                 src: parse_relative_path(SYMLINK_META_KEY, original)?,

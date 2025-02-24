@@ -2,19 +2,18 @@
 
 use std::{collections::HashMap, io, mem};
 
-use baza::futures::{stream, StreamExt as _};
+use baza::futures::{StreamExt as _, stream};
 use baza_api_s3 as s3;
-
 use cucumber::{gherkin::Step, given, then, when};
-use rusoto_core::{region::Region, HttpClient, RusotoError};
+use rusoto_core::{HttpClient, RusotoError, region::Region};
 use rusoto_credential::StaticProvider;
 use rusoto_s3::{
     GetObjectError, GetObjectRequest, PutObjectError, PutObjectRequest,
-    S3Client, S3 as _,
+    S3 as _, S3Client,
 };
 use tokio::io::AsyncReadExt as _;
 
-use super::{sample_file, World, DATA_DIR};
+use super::{DATA_DIR, World, sample_file};
 
 /// URL of S3 HTTP API to run E2E tests against.
 const API_URL: &str = "http://localhost:9294";
@@ -192,12 +191,7 @@ async fn try_get_object(
 
     let resp = s3_client().get_object(req).await?;
     let mut buf = Vec::new();
-    resp.body
-        .unwrap()
-        .into_async_read()
-        .read_to_end(&mut buf)
-        .await
-        .unwrap();
+    resp.body.unwrap().into_async_read().read_to_end(&mut buf).await.unwrap();
 
     Ok(buf)
 }
@@ -208,10 +202,7 @@ fn s3_client() -> S3Client {
     S3Client::new_with(
         HttpClient::new().expect("Failed to initialize Rusoto HTTP client"),
         StaticProvider::new_minimal("baza".into(), "baza".into()),
-        Region::Custom {
-            name: "test".into(),
-            endpoint: API_URL.into(),
-        },
+        Region::Custom { name: "test".into(), endpoint: API_URL.into() },
     )
 }
 
@@ -222,8 +213,6 @@ impl World {
     ///
     /// If there is no [`GetObjectResponse`] in this [`World`].
     fn last_get_object_response(&mut self) -> GetObjectResponse {
-        self.get_object_response
-            .take()
-            .expect("No `GetObjectResponse`")
+        self.get_object_response.take().expect("No `GetObjectResponse`")
     }
 }
