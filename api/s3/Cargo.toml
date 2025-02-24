@@ -1,8 +1,8 @@
 [package]
 name = "baza-api-s3"
 version = "0.0.0"
-edition = "2021"
-rust-version = "1.81"
+edition = "2024"
+rust-version = "1.85"
 description = "S3 HTTP API implementation of Baza."
 authors = ["Instrumentisto Team <developer@instrumentisto.com>"]
 license = "BlueOak-1.0.0"

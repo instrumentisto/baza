@@ -6,14 +6,13 @@ use std::{
 };
 
 use async_fs::File;
-use derive_more::with_trait::{Display, Error};
-use futures::{pin_mut, AsyncRead, AsyncWriteExt as _, Stream, StreamExt as _};
-use tracerr::Traced;
-use uuid::Uuid;
-
 pub use async_trait::async_trait;
+use derive_more::with_trait::{Display, Error};
 pub use futures;
+use futures::{AsyncRead, AsyncWriteExt as _, Stream, StreamExt as _, pin_mut};
+use tracerr::Traced;
 pub use tracing;
+use uuid::Uuid;
 
 /// Execution of a filesystem operation.
 #[async_trait]
@@ -58,15 +57,11 @@ impl Storage {
         let root = root.into();
 
         let data = root.join("data");
-        async_fs::create_dir_all(&data)
-            .await
-            .map_err(tracerr::wrap!())?;
+        async_fs::create_dir_all(&data).await.map_err(tracerr::wrap!())?;
 
         let tmp = root.join("tmp");
         remove_existing_dir(&tmp).await.map_err(tracerr::wrap!())?;
-        async_fs::create_dir_all(&tmp)
-            .await
-            .map_err(tracerr::wrap!())?;
+        async_fs::create_dir_all(&tmp).await.map_err(tracerr::wrap!())?;
 
         Ok(Self {
             data_dir: async_fs::canonicalize(data)
@@ -119,9 +114,7 @@ where
     async fn exec(&self, op: CreateFile<S>) -> Result<Self::Ok, Self::Err> {
         let path = self.data_dir.join(op.path);
         if let Some(dir) = path.parent() {
-            async_fs::create_dir_all(dir)
-                .await
-                .map_err(tracerr::wrap!())?;
+            async_fs::create_dir_all(dir).await.map_err(tracerr::wrap!())?;
         }
 
         let mut f = File::create(path).await.map_err(tracerr::wrap!())?;
@@ -157,9 +150,7 @@ impl Exec<CreateSymlink> for Storage {
     async fn exec(&self, op: CreateSymlink) -> Result<Self::Ok, Self::Err> {
         let dest = self.data_dir.join(op.dest);
         if let Some(dir) = dest.parent() {
-            async_fs::create_dir_all(dir)
-                .await
-                .map_err(tracerr::wrap!())?;
+            async_fs::create_dir_all(dir).await.map_err(tracerr::wrap!())?;
         }
         let src = self.data_dir.join(op.src);
 
@@ -174,9 +165,7 @@ impl Exec<CreateSymlink> for Storage {
         // 1. create temporary symlink file;
         // 2. replace the original file with the temporary one.
         let tmp = self.tmp_dir.join(Uuid::new_v4().to_string());
-        async_fs::unix::symlink(src, &tmp)
-            .await
-            .map_err(tracerr::wrap!())?;
+        async_fs::unix::symlink(src, &tmp).await.map_err(tracerr::wrap!())?;
         async_fs::rename(&tmp, dest).await.map_err(tracerr::wrap!())
     }
 }
