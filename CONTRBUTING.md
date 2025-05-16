@@ -15,13 +15,13 @@ Additional rules, not handled by [rustfmt] and [Clippy] are described below.
 
 ### Attributes
 
-**Attributes** on declarations must be **sorted in alphabetic order**. **Items inside attribute** must be **sorted in alphabetic order** too.
+**Attributes** on declarations must be **sorted in alphabetic order**. **Items inside attribute** must be **sorted in alphabetic order** too (in the same manner they're sorted by [rustfmt] inside `use` statement).
 
 #### 👍 Correct example
 
 ```rust
 #[allow(clippy::mut_mut)]
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, smart_default::SmartDefault)]
 #[serde(deny_unknown_fields)]
 struct User {
     #[serde(default)]
@@ -33,7 +33,7 @@ struct User {
 
 ```rust
 #[serde(deny_unknown_fields)]
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, smart_default::SmartDefault)]
 #[allow(clippy::mut_mut)]
 struct User {
     id: u64,
@@ -41,7 +41,14 @@ struct User {
 ```
 
 ```rust
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, smart_default::SmartDefault, Serialize, Deserialize)]
+struct User {
+    id: u64,
+}
+```
+
+```rust
+#[derive(smart_default::SmartDefault, Debug, Deserialize, Serialize)]
 struct User {
     id: u64,
 }
@@ -60,9 +67,9 @@ Other **code definitions** should be **referred via ```[`Entity`]``` marking** (
 
 ```rust
 /// Type of [`User`]'s unique identifier.
-/// 
+///
 /// # Constraints
-/// 
+///
 /// - It **must not be zero**.
 /// - It _should not_ overflow [`i64::max_value`] due to usage in database.
 struct UserId(u64);
@@ -74,9 +81,9 @@ struct UserId(u64);
 
     ```rust
     /// Type of [`User`]'s unique identifier.
-    /// 
+    ///
     /// ## Constraints
-    /// 
+    ///
     /// - It **must not be zero**.
     /// - It _should not_ overflow [`i64::max_value`] due to usage in database.
     struct UserId(u64);
@@ -86,9 +93,9 @@ struct UserId(u64);
 
     ```rust
     /// Type of User's unique identifier.
-    /// 
+    ///
     /// # Constraints
-    /// 
+    ///
     /// - It **must not be zero**.
     /// - It _should not_ overflow `i64::max_value` due to usage in database.
     struct UserId(u64);
@@ -98,9 +105,9 @@ struct UserId(u64);
 
     ```rust
     /// Type of [`User`]'s unique identifier.
-    /// 
+    ///
     /// # Constraints
-    /// 
+    ///
     /// - It __must not be zero__.
     /// - It *should not* overflow [`i64::max_value`] due to usage in database.
     struct UserId(u64);

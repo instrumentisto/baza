@@ -14,7 +14,7 @@ use rand::{Rng as _, distr::Alphanumeric};
 /// Path to the directory where files are stored during E2E tests running.
 const DATA_DIR: &str = "../.cache/baza/data";
 
-#[derive(cucumber::World, Debug, Default)]
+#[derive(Debug, Default, cucumber::World)]
 struct World {
     /// Random string of the concrete scenario run, to enrich its data with, for
     /// avoiding possible collisions with other running scenarios.
