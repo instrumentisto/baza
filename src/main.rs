@@ -1,8 +1,9 @@
 use std::path::PathBuf;
 
-use baza::{Storage, tracing::Level};
+use baza::Storage;
 use baza_api_s3 as s3;
 use secrecy::SecretString;
+use tracing::Level;
 
 #[tokio::main]
 async fn main() -> Result<(), String> {
