@@ -11,7 +11,6 @@ use derive_more::with_trait::{Display, Error};
 pub use futures;
 use futures::{AsyncRead, AsyncWriteExt as _, Stream, StreamExt as _, pin_mut};
 use tracerr::Traced;
-pub use tracing;
 use uuid::Uuid;
 
 /// Execution of a filesystem operation.

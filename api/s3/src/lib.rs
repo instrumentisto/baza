@@ -8,7 +8,7 @@ use std::{
 
 use baza::{
     CreateFile, CreateSymlink, Exec, GetFile, ReadOnlyFile, RelativePath,
-    async_trait, futures::future, tracing,
+    async_trait, futures::future,
 };
 use derive_more::with_trait::{Display, Error, From};
 use hyper::{server::Server, service::make_service_fn};

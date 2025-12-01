@@ -222,6 +222,7 @@ dependencies = [
  "clap",
  "secrecy",
  "tokio",
+ "tracing",
  "tracing-subscriber",
 ]
 
@@ -235,6 +236,7 @@ dependencies = [
  "s3-server",
  "secrecy",
  "tokio-util",
+ "tracing",
 ]
 
 [[package]]
