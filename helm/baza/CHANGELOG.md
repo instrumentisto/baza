@@ -6,6 +6,19 @@ All user visible changes to this project will be documented in this file. This p
 
 
 
+## [0.5.0] · 2025-12-??
+[0.5.0]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.5.0/helm/baza
+
+### BC Breaks
+
+- Made `ingress.tls.secretName` not mandatory, falling back to default naming. ([todo])
+- Remove support of `auto` value for `ingress.tls.secretName` entries. ([todo])
+
+[todo]: https://github.com/instrumentisto/baza/commit/todo
+
+
+
+
 ## [0.4.2] · 2025-12-05
 [0.4.2]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.4.2/helm/baza
 
