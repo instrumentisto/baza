@@ -113,7 +113,7 @@ ingress:
   tls:
     enabled: no
     auto: no
-    # Overridden names of TLS `Secret`s for `ingres.hosts`.
+    # Overridden names of TLS `Secret`s for `ingress.hosts`.
     # If not specified, then default `<host>.tls` naming is used.
     secretName: {}
       #baza.test: custom-name.tls
