@@ -6,14 +6,14 @@ All user visible changes to this project will be documented in this file. This p
 
 
 
-## [0.4.2] · 2025-12-??
+## [0.4.2] · 2025-12-05
 [0.4.2]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.4.2/helm/baza
 
 ### Added
 
-- Support of `auto` value for `ingress.tls.secretName` entries. ([todo])
+- Support of `auto` value for `ingress.tls.secretName` entries. ([1d74fa29])
 
-[todo]: https://github.com/instrumentisto/baza/commit/todo
+[1d74fa29]: https://github.com/instrumentisto/baza/commit/1d74fa29facb3c1789ca5a9f821ad56fa42d9d13
 
 
 
