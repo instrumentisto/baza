@@ -6,6 +6,18 @@ All user visible changes to this project will be documented in this file. This p
 
 
 
+## [0.4.2] · 2025-12-??
+[0.4.2]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.4.2/helm/baza
+
+### Added
+
+- Support of `auto` value for `ingress.tls.secretName` entries. ([todo])
+
+[todo]: https://github.com/instrumentisto/baza/commit/todo
+
+
+
+
 ## [0.4.1] · 2024-07-16
 [0.4.1]: https://github.com/instrumentisto/baza/tree/helm%2Fbaza%2F0.4.1/helm/baza
 
@@ -31,7 +43,7 @@ All user visible changes to this project will be documented in this file. This p
 
 ### Fixed
 
-- `baza` container not starting when data is persisted. 
+- `baza` container not starting when data is persisted.
 
 
 

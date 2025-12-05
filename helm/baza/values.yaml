@@ -114,7 +114,8 @@ ingress:
     enabled: no
     auto: no
     secretName:  # not required when `auto: yes`
-      baza.test: baza.test.tls
+      baza.test: auto  # means to use `<host>.tls` naming
+      #baza.test: baza.test.tls
 
   className: ""
 
