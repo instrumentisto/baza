@@ -12,8 +12,7 @@ publish = false
 async-fs = "2.2"
 baza = { package = "baza-lib", path = "../lib" }
 baza-api-s3 = { path = "../api/s3" }
-cucumber = { version = "0.21", features = ["libtest"] }
-once_cell = "1.21"
+cucumber = { version = "0.22", features = ["libtest"] }
 rand = "0.9"
 rusoto_core = "0.48"
 rusoto_credential = "0.48"
