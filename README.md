@@ -17,6 +17,13 @@ Currently, is under development.
 
 
 
+## Status
+
+__PROJECT IS CLOSED AND ARCHIVED. NO MAINTAINING WILL BE CONTINUED.__
+
+
+
+
 ## License
 
 Copyright © 2022-2026 Instrumentisto Team, https://github.com/instrumentisto
